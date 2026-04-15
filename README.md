@@ -33,7 +33,7 @@ Frontend: React
 
 API Gateway: Punto de entrada único para las peticiones.
 
-Microservicios: Desarrollados en Node.js con TypeScript.
+Microservicios: Desarrollados en Node.js con TypeScript/JavaScript.
 
 Supabase: Utilizado para la autenticación y la base de datos principal.
 
@@ -44,6 +44,8 @@ Proveer un sistema escalable y modular donde cada servicio funcione de manera in
 Node.js
 
 TypeScript
+
+JavaScript
 
 React
 
