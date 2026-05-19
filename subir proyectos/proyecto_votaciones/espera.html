@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votación en Proceso</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .espera-container {
+            max-width: 600px;
+            margin: 100px auto;
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .espera-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .tiempo-restante {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .instrucciones-espera {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+    <div class="espera-container">
+        <div class="espera-icon">⏳</div>
+        <h1>Votación en Proceso</h1>
+        
+        <div class="instrucciones-espera">
+            <h3>Información:</h3>
+            <p>• Ya has emitido tu voto correctamente.</p>
+            <p>• Los resultados se mostrarán cuando termine el tiempo de votación.</p>
+            <p>• El administrador puede ver los resultados en cualquier momento.</p>
+        </div>
+        
+        <div class="tiempo-restante" id="tiempoRestante">
+            Calculando tiempo restante...
+        </div>
+        
+        <p>Puedes cerrar sesión o esperar aquí para ver los resultados al finalizar.</p>
+        
+        <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center;">
+            <button onclick="cerrarSesion()" class="btn-secondary">Cerrar Sesión</button>
+            <button onclick="volverAlInicio()" class="btn-primary">Volver al Inicio</button>
+        </div>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/verificaciones.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initDatabase();
+            
+            // Verificar que el usuario haya votado
+            const usuario = JSON.parse(sessionStorage.getItem('usuario') || '{}');
+            if (!usuario.id || !usuario.ha_votado_lider) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Si ya terminó la votación, ir directamente a resultados
+            if (votacionFinalizada()) {
+                window.location.href = 'resultados.html';
+                return;
+            }
+            
+            // Actualizar tiempo restante
+            actualizarTiempoRestante();
+            setInterval(actualizarTiempoRestante, 30000); // Cada 30 segundos
+            
+            // Verificar cada 10 segundos si ya terminó
+            setInterval(function() {
+                if (votacionFinalizada()) {
+                    window.location.href = 'resultados.html';
+                }
+            }, 10000);
+        });
+        
+        function actualizarTiempoRestante() {
+            const tiempoElement = document.getElementById('tiempoRestante');
+            const tiempoRestante = obtenerTiempoRestante();
+            tiempoElement.textContent = tiempoRestante;
+        }
+    </script>
+</body>
+</html>

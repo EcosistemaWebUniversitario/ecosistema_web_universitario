@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Votación Estudiantil</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>Sistema de Votación</h1>
+            
+            <!-- Sistema de pestañas -->
+            <div class="tabs">
+                <button class="tab-button active" data-tab="login" onclick="cambiarTab('login')">
+                    Iniciar Sesión
+                </button>
+                <button class="tab-button" data-tab="register" onclick="cambiarTab('register')">
+                    Crear Cuenta
+                </button>
+            </div>
+            
+            <!-- Formulario de Login -->
+            <form id="loginForm" class="tab-content active">
+                <h2>Login de Estudiante</h2>
+                
+                <div class="form-group">
+                    <label for="matricula">Matrícula:</label>
+                    <input type="text" id="matricula" placeholder="Ej: A12345" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" placeholder="Mínimo 3 caracteres" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Ingresar</button>
+            </form>
+            
+            <!-- Formulario de Registro -->
+            <form id="registerForm" class="tab-content">
+                <h2>Registro de Estudiante</h2>
+                
+                <div class="form-group">
+                    <label for="regMatricula">Matrícula:</label>
+                    <input type="text" id="regMatricula" placeholder="Ej: A12345" required>
+                    <small class="hint">Usa tu matrícula institucional</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regNombre">Nombre Completo:</label>
+                    <input type="text" id="regNombre" placeholder="Nombre Apellidos" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regPassword">Contraseña:</label>
+                    <input type="password" id="regPassword" placeholder="Mínimo 3 caracteres" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regConfirmPassword">Confirmar Contraseña:</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Repite tu contraseña" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Crear Cuenta</button>
+            </form>
+            
+            <div class="login-links">
+                <a href="admin-login.html" class="btn-secondary">Acceso Administrador</a>
+                <a href="resultados.html" class="btn-link">Ver Resultados</a>
+                <a href="#" onclick="limpiarBaseDatos()" class="btn-link text-danger" style="color: #dc3545;">
+                    Limpiar Datos (Debug)
+                </a>
+            </div>
+            
+            <div id="message" class="message"></div>
+            <div id="registerMessage" class="message"></div>
+        </div>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/registro.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initDatabase();
+            cargarUsuariosEjemplo();
+            
+            // Verificar si hay usuarios
+            const totalUsuarios = ejecutarConsulta("SELECT COUNT(*) as total FROM usuarios")[0].total;
+            console.log(`Total de usuarios en sistema: ${totalUsuarios}`);
+        });
+    </script>
+</body>
+</html>

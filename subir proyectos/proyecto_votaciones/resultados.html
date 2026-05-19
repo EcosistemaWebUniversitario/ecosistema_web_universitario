@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de Votación</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/resultados.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Resultados de las Elecciones Estudiantiles</h1>
+            <div class="header-links">
+                <a href="index.html" class="btn-secondary">Iniciar Sesión</a>
+                <button onclick="actualizarResultados()" class="btn-primary">Actualizar Resultados</button>
+            </div>
+        </header>
+
+<div id="restriccionTiempo" style="display: none;">
+    <div class="message info">
+        <strong>Nota:</strong> Estos resultados son visibles porque la votación ha finalizado.
+        Durante la votación, solo el administrador puede ver los resultados.
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const admin = JSON.parse(sessionStorage.getItem('admin') || '{}');
+        if (!admin.id) {
+            document.getElementById('restriccionTiempo').style.display = 'block';
+        }
+    });
+</script>
+
+        <div class="tiempo-votacion">
+            <h3>Estado de la Votación:</h3>
+            <p id="estadoVotacion">Cargando...</p>
+            <p id="tiempoRestante"></p>
+        </div>
+
+        <div class="resultados-section">
+            <h2>Miembros de la Organización (Top 7)</h2>
+            <div class="resultados-container" id="resultadosOrganizacion">
+                <!-- Resultados cargados dinámicamente -->
+            </div>
+        </div>
+
+        <div class="resultados-section">
+            <h2>Líder de la Organización</h2>
+            <div class="resultados-container" id="resultadosLider">
+                <!-- Resultados cargados dinámicamente -->
+            </div>
+        </div>
+
+        <div class="estadisticas">
+            <h2>Estadísticas de Votación</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total de Votantes</h3>
+                    <p id="totalVotantes">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Votos Organización</h3>
+                    <p id="votosOrganizacion">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Votos Líder</h3>
+                    <p id="votosLider">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Porcentaje Participación</h3>
+                    <p id="porcentajeParticipacion">0%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/resultados.js"></script>
+    <script src="js/verificaciones.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initDatabase();
+            cargarResultados();
+            verificarEstadoVotacion();
+        });
+    </script>
+</body>
+</html>

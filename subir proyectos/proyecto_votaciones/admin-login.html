@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Sistema de Votación</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>Panel de Administración</h1>
+            <h2>Login de Administrador</h2>
+            
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminUser">Usuario:</label>
+                    <input type="text" id="adminUser" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminPassword">Contraseña:</label>
+                    <input type="password" id="adminPassword" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">Ingresar como Admin</button>
+            </form>
+
+            <!-- AGREGAR después del formulario y antes del cierre del div .login-box -->
+<div class="debug-actions" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+    <h3 style="color: #666; font-size: 14px; margin-bottom: 10px;">Debug (Eliminar en producción)</h3>
+    <button onclick="debugAdminLogin()" class="btn-secondary" style="font-size: 12px; padding: 5px 10px;">
+        Verificar Login Admin
+    </button>
+    <button onclick="resetAdminPassword()" class="btn-danger" style="font-size: 12px; padding: 5px 10px;">
+        Resetear Admin
+    </button>
+    <button onclick="limpiarBaseDatos()" class="btn-danger" style="font-size: 12px; padding: 5px 10px;">
+        Limpiar Todo
+    </button>
+</div>
+            
+            <div class="login-links">
+                <a href="index.html" class="btn-secondary">Volver a Login Estudiantes</a>
+            </div>
+            
+            <div id="adminMessage" class="message"></div>
+
+        </div>
+    </div>
+
+
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-login.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initDatabase();
+        });
+    </script>
+
+    
+<script src="js/admin-login.js"></script>
+<script>
+    // Mostrar ayuda de debug
+    console.log('=== DEBUG ADMIN ===');
+    console.log('Usuario: admin');
+    console.log('Contraseña: admin123');
+    console.log('Para debug en consola: debugAdminLogin()');
+    console.log('Para resetear: resetAdminPassword()');
+    console.log('===================');
+</script>
+</body>
+</html>

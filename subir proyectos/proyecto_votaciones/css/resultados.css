@@ -1,0 +1,172 @@
+/* Resultados específicos */
+.tiempo-votacion {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    border: 2px solid #dee2e6;
+}
+
+.tiempo-votacion h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+#estadoVotacion {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+#tiempoRestante {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Resultados containers */
+.resultados-section {
+    margin-bottom: 40px;
+}
+
+.resultados-section h2 {
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.resultados-container {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
+/* Items de resultados */
+.resultado-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: transform 0.3s;
+}
+
+.resultado-item:hover {
+    transform: translateX(5px);
+    border-color: #667eea;
+}
+
+.resultado-item.ganador {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #28a745;
+}
+
+.posicion {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #667eea;
+    min-width: 40px;
+}
+
+.ganador .posicion {
+    color: #28a745;
+}
+
+.info-candidato {
+    flex: 1;
+    padding: 0 20px;
+}
+
+.info-candidato h3 {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.info-candidato p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.votos-info {
+    text-align: right;
+    min-width: 100px;
+}
+
+.votos-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.votos-porcentaje {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Barras de progreso */
+.progress-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 4px;
+    transition: width 1s ease-in-out;
+}
+
+/* Estadísticas */
+.estadisticas {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    margin-top: 30px;
+    border: 1px solid #dee2e6;
+}
+
+.estadisticas h2 {
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.stat-card p {
+    color: #333;
+    font-size: 2rem;
+    font-weight: 700;
+}

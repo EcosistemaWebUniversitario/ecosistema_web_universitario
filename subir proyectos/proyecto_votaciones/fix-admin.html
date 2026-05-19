@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reparar Admin</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+    <h1>Reparación de Admin</h1>
+    
+    <div id="status">Inicializando...</div>
+    
+    <button onclick="fixAdmin()">Reparar Admin</button>
+    <button onclick="showUsers()">Ver Usuarios</button>
+    
+    <script src="js/database.js"></script>
+    <script>
+        async function init() {
+            await initDatabase();
+            document.getElementById('status').textContent = 'Base de datos lista';
+        }
+        
+        async function fixAdmin() {
+            // Forzar creación de admin con hash correcto
+            const adminPasswordHash = hashPassword('admin123');
+            
+            // Eliminar admin existente
+            ejecutarActualizacion("DELETE FROM usuarios WHERE matricula = 'admin'");
+            
+            // Crear nuevo admin
+            const resultado = ejecutarActualizacion(
+                "INSERT INTO usuarios (matricula, nombre, password, es_admin) VALUES ('admin', 'Administrador', ?, 1)",
+                [adminPasswordHash]
+            );
+            
+            alert(resultado > 0 ? '✓ Admin reparado' : '✗ Error');
+            guardarBaseDatos();
+        }
+        
+        function showUsers() {
+            const usuarios = ejecutarConsulta("SELECT * FROM usuarios");
+            console.table(usuarios);
+            alert(`${usuarios.length} usuarios en sistema`);
+        }
+        
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

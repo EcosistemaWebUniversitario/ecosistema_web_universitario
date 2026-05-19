@@ -1,0 +1,181 @@
+/* Panel de administración */
+.admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.admin-controls {
+    display: flex;
+    gap: 15px;
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 1024px) {
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.admin-section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+}
+
+.admin-section h2 {
+    color: #333;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+/* Formularios admin */
+.form-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid #dee2e6;
+}
+
+.form-container h3 {
+    color: #555;
+    margin-bottom: 20px;
+}
+
+/* Lista de candidatos */
+.lista-candidatos {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.candidato-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.candidato-item:last-child {
+    border-bottom: none;
+}
+
+.candidato-info h4 {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.candidato-info .tipo {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-right: 10px;
+}
+
+.tipo-organizacion {
+    background: #d4edda;
+    color: #155724;
+}
+
+.tipo-lider {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.tipo-ambos {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.candidato-actions button {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+}
+
+/* Configuración containers */
+.config-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.config-container h3 {
+    color: #555;
+    margin-bottom: 20px;
+}
+
+/* Estado del sistema */
+.estado-sistema {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.estado-sistema h3 {
+    color: #555;
+    margin-bottom: 15px;
+}
+
+#estadoSistema {
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.estado-activo {
+    background: #d4edda;
+    color: #155724;
+}
+
+.estado-inactivo {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+#contadoresAdmin {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.contador-item {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.contador-item h4 {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.contador-item p {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
