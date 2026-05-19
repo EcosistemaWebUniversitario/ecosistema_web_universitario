@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>Panel de Administración</h1>
+            <div class="admin-controls">
+                <button onclick="cerrarSesionAdmin()" class="btn-secondary">Cerrar Sesión</button>
+                <button onclick="window.location.href='resultados.html'" class="btn-primary">
+                    Ver Resultados Públicos
+                </button>
+            </div>
+        </header>
+
+        <div class="admin-grid">
+            <!-- Columna Izquierda: Gestión de Candidatos -->
+            <div class="admin-section">
+                <h2>Gestión de Candidatos</h2>
+                
+                <div class="form-container">
+                    <h3>Agregar Nuevo Candidato</h3>
+                    <form id="formCandidato">
+                        <div class="form-group">
+                            <label for="nombreCandidato">Nombre Completo:</label>
+                            <input type="text" id="nombreCandidato" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tipoCandidato">Tipo de Candidatura:</label>
+                            <select id="tipoCandidato" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="organizacion">Miembro de Organización</option>
+                                <option value="lider">Líder de Organización</option>
+                                <option value="ambos">Ambas Candidaturas</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descripcionCandidato">Descripción/Biografía:</label>
+                            <textarea id="descripcionCandidato" rows="3"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Agregar Candidato</button>
+                    </form>
+                </div>
+
+                <div class="lista-candidatos">
+                    <h3>Candidatos Registrados</h3>
+                    <div id="listaCandidatos">
+                        <!-- Lista cargada dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Configuración del Sistema -->
+            <div class="admin-section">
+                <h2>Configuración del Sistema</h2>
+                
+                <div class="config-container">
+                    <h3>Tiempo de Votación</h3>
+                    <form id="formTiempoVotacion">
+                        <div class="form-group">
+                            <label for="inicioVotacion">Fecha y Hora de Inicio:</label>
+                            <input type="datetime-local" id="inicioVotacion" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="finVotacion">Fecha y Hora de Fin:</label>
+                            <input type="datetime-local" id="finVotacion" required>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Establecer Tiempo</button>
+                    </form>
+                </div>
+
+                <div class="config-container">
+                    <h3>Gestión de Usuarios</h3>
+                    <button onclick="generarUsuariosEjemplo()" class="btn-secondary">
+                        Generar Usuarios de Ejemplo
+                    </button>
+                    <button onclick="reiniciarVotacion()" class="btn-danger">
+                        Reiniciar Votación
+                    </button>
+                </div>
+
+                <div class="config-container">
+                    <h3>Exportar Resultados</h3>
+                    <button onclick="exportarResultadosCSV()" class="btn-primary">
+                        Exportar a CSV
+                    </button>
+                    <button onclick="exportarResultadosJSON()" class="btn-primary">
+                        Exportar a JSON
+                    </button>
+                </div>
+
+                <div class="estado-sistema">
+                    <h3>Estado del Sistema</h3>
+                    <p id="estadoSistema">Cargando...</p>
+                    <div id="contadoresAdmin"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initDatabase();
+            verificarAdmin();
+            cargarDatosAdmin();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votación Estudiantil</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/votacion.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Elecciones Estudiantiles</h1>
+            <div class="user-info">
+                <span id="userName"></span>
+                <button onclick="cerrarSesion()" class="btn-secondary">Cerrar Sesión</button>
+            </div>
+        </header>
+
+        <div class="votacion-container">
+            <!-- Paso 1: Votación Organización -->
+            <div class="paso" id="paso1">
+                <h2>Votación para Miembros de la Organización</h2>
+                <p class="instrucciones">Selecciona <strong>hasta 7 candidatos</strong> para formar parte de la organización estudiantil.</p>
+                
+                <div class="candidatos-grid" id="candidatosOrganizacion">
+                    <!-- Candidatos cargados dinámicamente -->
+                </div>
+                
+                <div class="contador">
+                    <span id="contadorSeleccionados">0</span> / 7 seleccionados
+                </div>
+                
+                <div class="botones">
+                    <button onclick="siguientePaso()" class="btn-primary" id="btnSiguiente" disabled>
+                        Continuar a Votación de Líder
+                    </button>
+                </div>
+            </div>
+
+            <!-- Paso 2: Votación Líder -->
+            <div class="paso" id="paso2" style="display: none;">
+                <h2>Votación para Líder de la Organización</h2>
+                <p class="instrucciones">Selecciona <strong>1 candidato</strong> para ser el líder de la organización estudiantil.</p>
+                
+                <div class="candidatos-grid" id="candidatosLider">
+                    <!-- Candidatos cargados dinámicamente -->
+                </div>
+                
+                <div class="contador">
+                    <span id="contadorLider">0</span> / 1 seleccionado
+                </div>
+                
+                <div class="botones">
+                    <button onclick="pasoAnterior()" class="btn-secondary">Volver</button>
+                    <button onclick="enviarVotos()" class="btn-primary" id="btnEnviar" disabled>
+                        Confirmar Votos
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="mensajeVotacion" class="message"></div>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/votacion.js"></script>
+    <script src="js/verificaciones.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initDatabase();
+            verificarSesion();
+            cargarCandidatos();
+        });
+    </script>
+</body>
+</html>

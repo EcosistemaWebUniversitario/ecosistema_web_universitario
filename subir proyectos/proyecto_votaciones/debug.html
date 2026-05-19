@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Sistema de Votación</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Diagnóstico del Sistema</h1>
+        
+        <div class="debug-info">
+            <h2>Información del Sistema</h2>
+            <div id="systemInfo"></div>
+            
+            <h2>Base de Datos</h2>
+            <div id="dbInfo"></div>
+            
+            <h2>Acciones</h2>
+            <button onclick="exportarBackup()" class="btn-primary">Exportar Backup</button>
+            <button onclick="limpiarBaseDatos()" class="btn-danger">Limpiar Todo</button>
+            <button onclick="location.reload()" class="btn-secondary">Recargar</button>
+            
+            <div class="back-link">
+                <a href="index.html" class="btn-link">← Volver al Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/database.js"></script>
+    <script>
+        async function loadDebugInfo() {
+            await initDatabase();
+            
+            // Info del sistema
+            const systemInfo = document.getElementById('systemInfo');
+            systemInfo.innerHTML = `
+                <p><strong>Navegador:</strong> ${navigator.userAgent}</p>
+                <p><strong>LocalStorage:</strong> ${localStorage.length} items</p>
+                <p><strong>SessionStorage:</strong> ${sessionStorage.length} items</p>
+            `;
+            
+            // Info de base de datos
+            const dbInfo = document.getElementById('dbInfo');
+            
+            try {
+                const usuarios = ejecutarConsulta("SELECT COUNT(*) as total FROM usuarios");
+                const candidatos = ejecutarConsulta("SELECT COUNT(*) as total FROM candidatos");
+                const votosOrg = ejecutarConsulta("SELECT COUNT(*) as total FROM votos_organizacion");
+                const votosLider = ejecutarConsulta("SELECT COUNT(*) as total FROM votos_lider");
+                
+                dbInfo.innerHTML = `
+                    <p><strong>Usuarios:</strong> ${usuarios[0].total}</p>
+                    <p><strong>Candidatos:</strong> ${candidatos[0].total}</p>
+                    <p><strong>Votos Organización:</strong> ${votosOrg[0].total}</p>
+                    <p><strong>Votos Líder:</strong> ${votosLider[0].total}</p>
+                `;
+            } catch (error) {
+                dbInfo.innerHTML = `<p class="error">Error al consultar BD: ${error.message}</p>`;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadDebugInfo);
+    </script>
+</body>
+</html>
