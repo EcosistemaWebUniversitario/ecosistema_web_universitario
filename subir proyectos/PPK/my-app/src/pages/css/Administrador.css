@@ -1,0 +1,99 @@
+/* Administrador.css */
+.admin-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
+}
+
+.admin-card {
+  background: white;
+  border-radius: 15px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.admin-title {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 30px;
+  font-size: 24px;
+  position: relative;
+}
+
+.admin-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: #3498db;
+  margin: 10px auto;
+  border-radius: 2px;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-input {
+  padding: 14px 18px;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: #3498db;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.admin-button {
+  background: linear-gradient(to right, #2980b9, #3498db);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+}
+
+.admin-button:hover {
+  background: linear-gradient(to right, #3498db, #2980b9);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+.admin-error-message {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 15px;
+  border-left: 4px solid #e74c3c;
+}
+
+.admin-error-text {
+  color: #e74c3c;
+  font-size: 14px;
+  margin-top: 5px;
+  padding-left: 5px;
+}
+
+.input-error {
+  border-color: #e74c3c !important;
+  background: rgba(231, 76, 60, 0.05) !important;
+}
