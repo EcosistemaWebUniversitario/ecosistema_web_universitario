@@ -1,0 +1,6 @@
+export enum ComputerStatus {
+	AVAILABLE = 'AVAILABLE',
+	IN_USE = 'IN_USE',
+	BROKEN = 'BROKEN',
+	MAINTENANCE = 'MAINTENANCE'
+}
