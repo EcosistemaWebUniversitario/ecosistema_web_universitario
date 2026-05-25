@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "rootDir": "backend/src",
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    //"types": ["node"],
+    "ignoreDeprecations": "6.0",
+    "typeRoots": ["./backend/src/types", "./node_modules/@types"]
+  },
+  "include": ["backend/src"],
+  "exclude": ["node_modules", "dist"]
+}
