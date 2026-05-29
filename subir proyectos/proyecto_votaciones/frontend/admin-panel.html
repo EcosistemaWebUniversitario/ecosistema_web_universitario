@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .search-box { position: relative; }
+    .search-results {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+      background: #fff; border: 1px solid #ddd; border-top: none;
+      border-radius: 0 0 6px 6px; max-height: 220px; overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    }
+    .search-result-item {
+      padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+      transition: background .15s;
+    }
+    .search-result-item:hover { background: #f5f8ff; }
+    .search-result-item .nombre { font-weight: 600; font-size: 14px; }
+    .search-result-item .detalle { font-size: 12px; color: #666; margin-top: 2px; }
+    .selected-student {
+      background: #eef4ff; border: 1px solid #b3ccff;
+      border-radius: 6px; padding: 10px 14px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .selected-student .info .nombre { font-weight: 600; font-size: 14px; }
+    .selected-student .info .ci { font-size: 12px; color: #555; }
+    .btn-clear { background: none; border: none; color: #e53e3e; cursor: pointer;
+                 font-size: 18px; padding: 0 4px; line-height: 1; }
+    #searchInput { width: 100%; }
+    #noResults { padding: 10px 14px; color: #999; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <header class="admin-header">
+      <h1>Panel de Administración</h1>
+      <div class="admin-controls">
+        <button onclick="cerrarSesionAdmin()" class="btn-secondary">Cerrar Sesión</button>
+        <button onclick="window.location.href='resultados.html'" class="btn-primary">Ver Resultados</button>
+      </div>
+    </header>
+
+    <div class="admin-grid">
+      <!-- Candidatos -->
+      <div class="admin-section">
+        <h2>Gestión de Candidatos</h2>
+        <div class="form-container">
+          <h3>Agregar Candidato</h3>
+
+          <!-- Buscador de estudiantes -->
+          <div class="form-group">
+            <label>Buscar Estudiante (nombre o CI):</label>
+            <div class="search-box">
+              <input type="text" id="searchInput" placeholder="Escribe al menos 2 caracteres..." autocomplete="off">
+              <div id="searchResults" class="search-results" style="display:none;"></div>
+            </div>
+          </div>
+
+          <!-- Estudiante seleccionado -->
+          <div id="selectedStudentBox" style="display:none;" class="selected-student">
+            <div class="info">
+              <div class="nombre" id="selectedNombre"></div>
+              <div class="ci" id="selectedCI"></div>
+            </div>
+            <button class="btn-clear" onclick="limpiarSeleccion()" title="Quitar selección">✕</button>
+          </div>
+
+          <!-- Tipo y descripción -->
+          <div class="form-group">
+            <label>Tipo de Candidatura:</label>
+            <select id="tipoCandidato" required>
+              <option value="">Seleccionar...</option>
+              <option value="organizacion">Miembro de Organización</option>
+              <option value="lider">Líder de Organización</option>
+              <option value="ambos">Ambas Candidaturas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Descripción (opcional):</label>
+            <textarea id="descripcionCandidato" rows="3"></textarea>
+          </div>
+          <button id="btnAgregar" class="btn-primary" onclick="agregarCandidato()">Agregar Candidato</button>
+          <div id="mensajeCandidato" class="message"></div>
+        </div>
+
+        <div class="lista-candidatos">
+          <h3>Candidatos Registrados</h3>
+          <div id="listaCandidatos">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- Configuración -->
+      <div class="admin-section">
+        <h2>Configuración del Sistema</h2>
+        <div class="config-container">
+          <h3>Tiempo de Votación</h3>
+          <div class="form-group">
+            <label>Fecha y Hora de Inicio:</label>
+            <input type="datetime-local" id="inicioVotacion" required>
+          </div>
+          <div class="form-group">
+            <label>Fecha y Hora de Fin:</label>
+            <input type="datetime-local" id="finVotacion" required>
+          </div>
+          <button class="btn-primary" onclick="guardarConfiguracion()">Establecer Tiempo</button>
+          <div id="mensajeConfig" class="message"></div>
+        </div>
+
+        <div class="estado-sistema">
+          <h3>Estado del Sistema</h3>
+          <div id="estadoSistema">Cargando...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    let estudianteSeleccionado = null;
+    let searchTimer = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const sesion = await API.sesion();
+      if (!sesion.autenticado || sesion.role !== 'admin_votaciones') {
+        window.location.href = '/admin-login.html'; return;
+      }
+      await cargarTodo();
+      iniciarBuscador();
+    });
+
+    // ── Buscador de estudiantes ──────────────────────────────────────────
+    function iniciarBuscador() {
+      const input = document.getElementById('searchInput');
+      const resultsBox = document.getElementById('searchResults');
+
+      input.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        const q = input.value.trim();
+        if (q.length < 2) { resultsBox.style.display = 'none'; return; }
+        searchTimer = setTimeout(() => buscarEstudiantes(q), 300);
+      });
+
+      // Cerrar al hacer clic fuera
+      document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !resultsBox.contains(e.target)) {
+          resultsBox.style.display = 'none';
+        }
+      });
+    }
+
+    async function buscarEstudiantes(q) {
+      const resultsBox = document.getElementById('searchResults');
+      resultsBox.innerHTML = '<div id="noResults">Buscando...</div>';
+      resultsBox.style.display = 'block';
+
+      try {
+        const res = await fetch(`/api/estudiantes/buscar?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        if (!data.length) {
+          resultsBox.innerHTML = '<div id="noResults">No se encontraron estudiantes</div>';
+          return;
+        }
+
+        resultsBox.innerHTML = data.map(est => `
+          <div class="search-result-item" onclick="seleccionarEstudiante(${JSON.stringify(est).replace(/"/g, '&quot;')})">
+            <div class="nombre">${est.nombre}</div>
+            <div class="detalle">Rol: estudiante</div>
+          </div>
+        `).join('');
+      } catch (e) {
+        resultsBox.innerHTML = '<div id="noResults">Error al buscar</div>';
+      }
+    }
+
+    function seleccionarEstudiante(est) {
+      estudianteSeleccionado = est;
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchResults').style.display = 'none';
+      document.getElementById('selectedNombre').textContent = est.nombre;
+      document.getElementById('selectedCI').textContent = `Rol: estudiante`;
+      document.getElementById('selectedStudentBox').style.display = 'flex';
+    }
+
+    function limpiarSeleccion() {
+      estudianteSeleccionado = null;
+      document.getElementById('selectedStudentBox').style.display = 'none';
+      document.getElementById('searchInput').value = '';
+    }
+
+    // ── Agregar candidato ────────────────────────────────────────────────
+    async function agregarCandidato() {
+      if (!estudianteSeleccionado) {
+        mostrarMensaje('Debes buscar y seleccionar un estudiante', 'error', 'mensajeCandidato');
+        return;
+      }
+      const tipo = document.getElementById('tipoCandidato').value;
+      if (!tipo) {
+        mostrarMensaje('Selecciona el tipo de candidatura', 'error', 'mensajeCandidato');
+        return;
+      }
+      const desc = document.getElementById('descripcionCandidato').value.trim();
+
+      const btn = document.getElementById('btnAgregar');
+      btn.disabled = true;
+      btn.textContent = 'Agregando...';
+
+      const res = await API.agregarCandidato(estudianteSeleccionado.nombre, tipo, desc, estudianteSeleccionado.profile_id);
+
+      btn.disabled = false;
+      btn.textContent = 'Agregar Candidato';
+
+      if (res.success) {
+        mostrarMensaje('Candidato agregado correctamente', 'success', 'mensajeCandidato');
+        limpiarSeleccion();
+        document.getElementById('tipoCandidato').value = '';
+        document.getElementById('descripcionCandidato').value = '';
+        await cargarCandidatos();
+      } else {
+        mostrarMensaje(res.error || 'Error al agregar', 'error', 'mensajeCandidato');
+      }
+    }
+
+    // ── Configuración ────────────────────────────────────────────────────
+    async function guardarConfiguracion() {
+      const inicio = new Date(document.getElementById('inicioVotacion').value).toISOString();
+      const fin    = new Date(document.getElementById('finVotacion').value).toISOString();
+      const res = await API.actualizarConfiguracion(inicio, fin);
+      if (res.success) {
+        mostrarMensaje('Tiempo de votación actualizado', 'success', 'mensajeConfig');
+        await cargarEstado();
+      } else {
+        mostrarMensaje(res.error || 'Error al actualizar', 'error', 'mensajeConfig');
+      }
+    }
+
+    // ── Carga de datos ───────────────────────────────────────────────────
+    async function cargarTodo() {
+      await Promise.all([cargarCandidatos(), cargarEstado(), cargarConfiguracion()]);
+    }
+
+    async function cargarCandidatos() {
+      const candidatos = await API.getCandidatos();
+      const lista = document.getElementById('listaCandidatos');
+      if (!candidatos.length) { lista.innerHTML = '<p>No hay candidatos registrados.</p>'; return; }
+      lista.innerHTML = candidatos.map(c => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eee;">
+          <div>
+            <strong>${c.nombre}</strong>
+            <span style="font-size:12px;color:#666;margin-left:8px;">[${c.tipo}]</span>
+            ${c.descripcion ? `<p style="font-size:12px;margin:2px 0;">${c.descripcion}</p>` : ''}
+          </div>
+          <button onclick="eliminarCandidato(${c.id})" class="btn-danger" style="font-size:12px;padding:4px 8px;">Eliminar</button>
+        </div>
+      `).join('');
+    }
+
+    async function eliminarCandidato(id) {
+      if (!confirm('¿Eliminar este candidato?')) return;
+      const res = await API.eliminarCandidato(id);
+      if (res.success) await cargarCandidatos();
+      else alert('Error al eliminar: ' + (res.error || ''));
+    }
+
+    async function cargarEstado() {
+      const stats = await API.estadisticasAdmin();
+      document.getElementById('estadoSistema').innerHTML = `
+        <p>Candidatos: <strong>${stats.total_candidatos}</strong></p>
+        <p>Votos Organización: <strong>${stats.votos_organizacion}</strong></p>
+        <p>Votos Líder: <strong>${stats.votos_lider}</strong></p>
+        <p>Votación activa: <strong>${stats.votacion_activa ? '✅ Sí' : '❌ No'}</strong></p>
+      `;
+    }
+
+    async function cargarConfiguracion() {
+      const config = await API.getConfiguracion();
+      if (config.inicio_votacion) {
+        document.getElementById('inicioVotacion').value = config.inicio_votacion.slice(0, 16);
+        document.getElementById('finVotacion').value = config.fin_votacion.slice(0, 16);
+      }
+    }
+
+    // cerrarSesionAdmin viene de main.js
+  </script>
+</body>
+</html>

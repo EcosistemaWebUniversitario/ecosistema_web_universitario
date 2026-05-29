@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votación Registrada</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .espera-container { max-width:600px; margin:100px auto; text-align:center; padding:40px; background:white; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.1); }
+    .espera-icon { font-size:80px; margin-bottom:20px; }
+    .tiempo-restante { font-size:1.5rem; font-weight:bold; color:#667eea; margin:20px 0; padding:15px; background:#f8f9fa; border-radius:10px; }
+  </style>
+</head>
+<body>
+  <div class="espera-container">
+    <div class="espera-icon">✅</div>
+    <h1>¡Voto Registrado!</h1>
+    <p>Has emitido tu voto correctamente. Los resultados estarán disponibles cuando finalice la votación.</p>
+    <div class="tiempo-restante" id="tiempoRestante">Calculando tiempo restante...</div>
+    <div style="margin-top:30px; display:flex; gap:15px; justify-content:center;">
+      <button onclick="cerrarSesion()" class="btn-secondary">Cerrar Sesión</button>
+      <button onclick="window.location.href='resultados.html'" class="btn-primary">Ver Resultados</button>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const sesion = await API.sesion();
+      if (!sesion.autenticado) { window.location.href = '/'; return; }
+
+      async function actualizar() {
+        const estado = await API.estadoVotacion();
+        if (estado.finalizada) { window.location.href = '/resultados.html'; return; }
+        document.getElementById('tiempoRestante').textContent = estado.tiempo_restante || 'Votación en curso';
+      }
+
+      await actualizar();
+      setInterval(actualizar, 30000);
+    });
+  </script>
+</body>
+</html>
