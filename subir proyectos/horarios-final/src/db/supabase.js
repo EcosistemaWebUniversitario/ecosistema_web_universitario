@@ -1,12 +1,14 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+// src/db/supabase.js
 const { createClient } = require('@supabase/supabase-js');
 
+// Ya no cargamos dotenv aquí; las variables vienen del entorno configurado por server.js
 const URL  = process.env.SUPABASE_URL;
 const ANON = process.env.SUPABASE_ANON_KEY;
 const SVC  = process.env.SUPABASE_SERVICE_KEY;
 
 if (!URL || !ANON || !SVC) {
-  console.error('[ERROR] Faltan variables en .env');
+  console.error('[ERROR] Faltan variables de Supabase en el entorno');
+  console.error('Asegúrate de que .env.local (desarrollo) o .env (producción) esté configurado.');
   process.exit(1);
 }
 

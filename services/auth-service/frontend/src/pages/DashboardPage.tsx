@@ -158,20 +158,7 @@ export default function DashboardPage() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <a
-                   href="/practicas"
-                       className="rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-slate-950 transition hover:bg-emerald-400"
-                      >
-                      Ir a Prácticas
-                  </a>
-                <button
-                  onClick={handleLogout}
-                  className="rounded-xl border border-white/15 bg-white/5 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
-                >
-                  Cerrar sesión
-                </button>
-              </div>
+              
             </div>
           </div>
 

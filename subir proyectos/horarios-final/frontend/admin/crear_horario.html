@@ -145,7 +145,6 @@
             color: var(--color-danger);
         }
         
-        /* ALERTAS MEJORADAS */
         .alert-info {
             background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(58, 12, 163, 0.1) 100%);
             border: 1px solid rgba(67, 97, 238, 0.2);
@@ -162,7 +161,6 @@
             border-radius: 10px;
         }
         
-        /* CHECKBOX ESTILIZADO */
         .form-check-input:checked {
             background-color: var(--color-primary);
             border-color: var(--color-primary);
@@ -173,7 +171,6 @@
             box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
         }
         
-        /* VISTA PREVIA ESTILIZADA */
         #previewTitulo {
             color: var(--color-primary);
             font-weight: 600;
@@ -185,7 +182,6 @@
             font-weight: 600;
         }
         
-        /* RESPONSIVE */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -205,7 +201,6 @@
             }
         }
         
-        /* EFECTO DE TEXTO */
         h1, h2, h3, h4, h5, h6 {
             font-weight: 600;
         }
@@ -215,7 +210,6 @@
             font-size: 0.85rem;
         }
         
-        /* GRADIENTE EN TEXTO */
         .gradient-text {
             background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
             -webkit-background-clip: text;
@@ -223,7 +217,6 @@
             color: transparent;
         }
         
-        /* BOTÓN DE ENVÍO ANIMADO */
         .btn-submit {
             position: relative;
             overflow: hidden;
@@ -258,7 +251,7 @@
                                 <h1 class="h3 mb-1"><i class="fas fa-calendar-plus me-2"></i>Crear Nuevo Horario</h1>
                                 <small class="opacity-85">Configura un nuevo horario académico para la carrera</small>
                             </div>
-                            <a href="/admin/dashboard" class="btn btn-light btn-sm" aria-label="Volver al Dashboard">
+                            <a href="/horarios/admin/dashboard" class="btn btn-light btn-sm" aria-label="Volver al Dashboard">
                                 <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
                             </a>
                         </div>
@@ -466,156 +459,184 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Set default dates
-        const today = new Date();
-        const startDate = new Date(today.getFullYear(), 8, 1); // September 1
-        const endDate = new Date(today.getFullYear() + 1, 0, 31); // January 31 next year
-        
-        document.getElementById('fecha_inicio').valueAsDate = startDate;
-        document.getElementById('fecha_fin').valueAsDate = endDate;
-        
-        // Update preview
-        function updatePreview() {
-            const titulo = document.getElementById('titulo').value;
-            const añoAcademico = document.getElementById('año_academico').value;
-            const semestre = document.getElementById('semestre').value;
-            const añoCarrera = document.getElementById('año_carrera').value;
-            const carrera = document.getElementById('carrera').value;
-            const modalidad = document.getElementById('modalidad').value;
-            const semanas = document.getElementById('semanas_totales').value;
-            
-            // Formatear año de carrera
-            let añoTexto = `${añoCarrera}er Año`;
-            if (añoCarrera === '2') añoTexto = '2do Año';
-            if (añoCarrera === '4') añoTexto = '4to Año';
-            
-            document.getElementById('previewTitulo').textContent = `${añoAcademico} - Semestre ${semestre}`;
-            document.getElementById('previewAnio').textContent = añoTexto;
-            document.getElementById('previewCarrera').textContent = carrera;
-            document.getElementById('previewModalidad').textContent = modalidad;
-            document.getElementById('previewSemanas').textContent = semanas;
-            
-            // Calcular slots (semanas * días * turnos por día)
-            const slots = semanas * 5 * 6; // 5 días por semana, 6 turnos por día
-            document.getElementById('previewSlots').textContent = slots;
+        // ═══════════════════════════════════════════
+        // AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
+        // ═══════════════════════════════════════════
+        function getToken() {
+            return localStorage.getItem('token') ??
+                   localStorage.getItem('access_token') ??
+                   localStorage.getItem('authToken');
         }
-        
-        // Attach event listeners
-        document.querySelectorAll('#formCrearHorario input, #formCrearHorario select').forEach(el => {
-            el.addEventListener('change', updatePreview);
-            el.addEventListener('keyup', updatePreview);
-        });
-        
-        // Initial preview update
-        updatePreview();
-        
-        // Form submission
-        document.getElementById('formCrearHorario').addEventListener('submit', async function(e) {
-            e.preventDefault();
+
+        function requireAuth() {
+            if (!getToken()) {
+                window.location.href = '/auth';
+                return false;
+            }
+            return true;
+        }
+
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            const token = getToken();
+            if (token) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            return originalFetch(url, options);
+        };
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('authToken');
+            window.location.href = '/auth';
+        }
+
+        // ═══════════════════════════════════════════
+        // LÓGICA DEL FORMULARIO
+        // ═══════════════════════════════════════════
+        (function() {
+            if (!requireAuth()) return;
+
+            const today = new Date();
+            const startDate = new Date(today.getFullYear(), 8, 1);
+            const endDate = new Date(today.getFullYear() + 1, 0, 31);
             
-            const submitBtn = document.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Creando...';
-            submitBtn.disabled = true;
+            document.getElementById('fecha_inicio').valueAsDate = startDate;
+            document.getElementById('fecha_fin').valueAsDate = endDate;
             
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Convert numbers
-            data.semestre = parseInt(data.semestre);
-            data.año_carrera = parseInt(data.año_carrera);
-            data.semanas_totales = parseInt(data.semanas_totales);
-            data.semanas_clases = parseInt(data.semanas_clases);
-            data.semanas_examenes = parseInt(data.semanas_examenes);
-            
-            try {
-                const response = await fetch('/api/horarios', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
+            function updatePreview() {
+                const titulo = document.getElementById('titulo').value;
+                const añoAcademico = document.getElementById('año_academico').value;
+                const semestre = document.getElementById('semestre').value;
+                const añoCarrera = document.getElementById('año_carrera').value;
+                const carrera = document.getElementById('carrera').value;
+                const modalidad = document.getElementById('modalidad').value;
+                const semanas = document.getElementById('semanas_totales').value;
                 
-                const result = await response.json();
+                let añoTexto = `${añoCarrera}er Año`;
+                if (añoCarrera === '2') añoTexto = '2do Año';
+                if (añoCarrera === '4') añoTexto = '4to Año';
                 
-                if (result.success) {
-                    // Mostrar notificación de éxito
-                    showNotification('success', '¡Horario creado exitosamente! Redirigiendo...');
+                document.getElementById('previewTitulo').textContent = `${añoAcademico} - Semestre ${semestre}`;
+                document.getElementById('previewAnio').textContent = añoTexto;
+                document.getElementById('previewCarrera').textContent = carrera;
+                document.getElementById('previewModalidad').textContent = modalidad;
+                document.getElementById('previewSemanas').textContent = semanas;
+                
+                const slots = semanas * 5 * 6;
+                document.getElementById('previewSlots').textContent = slots;
+            }
+            
+            document.querySelectorAll('#formCrearHorario input, #formCrearHorario select').forEach(el => {
+                el.addEventListener('change', updatePreview);
+                el.addEventListener('keyup', updatePreview);
+            });
+            
+            updatePreview();
+            
+            document.getElementById('formCrearHorario').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const submitBtn = document.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Creando...';
+                submitBtn.disabled = true;
+                
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+                
+                data.semestre = parseInt(data.semestre);
+                data.año_carrera = parseInt(data.año_carrera);
+                data.semanas_totales = parseInt(data.semanas_totales);
+                data.semanas_clases = parseInt(data.semanas_clases);
+                data.semanas_examenes = parseInt(data.semanas_examenes);
+                
+                try {
+                    const response = await fetch('/api/horarios/horarios', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    });
                     
-                    // If auto-generate is checked
-                    if (document.getElementById('generarAuto').checked) {
-                        const horarioId = result.id;
-                        try {
-                            const genResponse = await fetch(`/api/horarios/${horarioId}/generar-automatico`, {
-                                method: 'POST'
-                            });
-                            
-                            const genResult = await genResponse.json();
-                            if (genResult.success) {
-                                showNotification('info', `Horario generado automáticamente: ${genResult.message}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showNotification('success', '¡Horario creado exitosamente! Redirigiendo...');
+                        
+                        if (document.getElementById('generarAuto').checked) {
+                            const horarioId = result.id;
+                            try {
+                                const genResponse = await fetch(`/api/horarios/horarios/${horarioId}/generar-automatico`, {
+                                    method: 'POST'
+                                });
+                                
+                                const genResult = await genResponse.json();
+                                if (genResult.success) {
+                                    showNotification('info', `Horario generado automáticamente: ${genResult.message}`);
+                                }
+                            } catch (genError) {
+                                console.error('Error en generación automática:', genError);
                             }
-                        } catch (genError) {
-                            console.error('Error en generación automática:', genError);
                         }
+                        
+                        setTimeout(() => {
+                            window.location.href = `/horarios/admin/horarios/editar/${result.id}`;
+                        }, 2000);
+                        
+                    } else {
+                        showNotification('error', `Error: ${result.error || 'No se pudo crear el horario'}`);
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     }
-                    
-                    // Redirect to editor after 2 seconds
-                    setTimeout(() => {
-                        window.location.href = `/admin/horarios/editar/${result.id}`;
-                    }, 2000);
-                    
-                } else {
-                    showNotification('error', `Error: ${result.error || 'No se pudo crear el horario'}`);
+                } catch (error) {
+                    console.error('Error:', error);
+                    showNotification('error', 'Error de conexión con el servidor');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('error', 'Error de conexión con el servidor');
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }
-        });
-        
-        // Función para mostrar notificaciones
-        function showNotification(type, message) {
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
-            alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
-            alert.setAttribute('role', 'alert');
+            });
             
-            if (type === 'success') {
-                alert.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
-                        <div>
-                            <h6 class="alert-heading mb-1">¡Éxito!</h6>
-                            <p class="mb-0">${message}</p>
+            function showNotification(type, message) {
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+                alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
+                alert.setAttribute('role', 'alert');
+                
+                if (type === 'success') {
+                    alert.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
+                            <div>
+                                <h6 class="alert-heading mb-1">¡Éxito!</h6>
+                                <p class="mb-0">${message}</p>
+                            </div>
                         </div>
-                    </div>
-                `;
-            } else {
-                alert.innerHTML = `
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-exclamation-triangle fa-2x me-3 text-danger"></i>
-                        <div>
-                            <h6 class="alert-heading mb-1">Error</h6>
-                            <p class="mb-0">${message}</p>
+                    `;
+                } else {
+                    alert.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3 text-danger"></i>
+                            <div>
+                                <h6 class="alert-heading mb-1">Error</h6>
+                                <p class="mb-0">${message}</p>
+                            </div>
                         </div>
-                    </div>
-                `;
-            }
-            
-            document.body.appendChild(alert);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                if (alert.parentNode) {
-                    alert.remove();
+                    `;
                 }
-            }, 5000);
-        }
+                
+                document.body.appendChild(alert);
+                
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 5000);
+            }
+        })();
     </script>
 </body>
 </html>

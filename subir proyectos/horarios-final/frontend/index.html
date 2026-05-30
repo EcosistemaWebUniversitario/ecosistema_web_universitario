@@ -6,6 +6,7 @@
     <title>Sistema de Horarios - Ingeniería Informática</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Todo el CSS se mantiene exactamente igual */
         * {
             margin: 0;
             padding: 0;
@@ -867,7 +868,8 @@
             
             <nav class="nav-links">
                 <a href="#features" class="nav-link">Características</a>
-                <a href="/login" class="nav-link">Iniciar Sesión</a>
+                <!-- Enlace dinámico según sesión -->
+                <a href="/auth" class="nav-link" id="login-link">Iniciar Sesión</a>
                 <a href="#contact" class="nav-link">Contacto</a>
             </nav>
         </header>
@@ -887,7 +889,8 @@
             </p>
             
             <div class="cta-buttons">
-                <a href="/login" class="btn btn-primary">
+                <!-- Botón dinámico según sesión -->
+                <a id="cta-button" href="/auth" class="btn btn-primary">
                     <i class="fas fa-sign-in-alt"></i>
                     INICIAR SESIÓN
                 </a>
@@ -960,28 +963,84 @@
     </div>
     
     <script>
-        // SISTEMA DE SONIDO MEJORADO - Sin avisos de permiso
-        // Técnica: AudioContext suspendido inicialmente, activado en primera interacción
-        
+        // ═══════════════════════════════════════════
+        // AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
+        // ═══════════════════════════════════════════
+        function getToken() {
+            return localStorage.getItem('token') ??
+                   localStorage.getItem('access_token') ??
+                   localStorage.getItem('authToken');
+        }
+
+        function parseJwt(token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function getRoleFromToken() {
+            const token = getToken();
+            if (!token) return null;
+            const decoded = parseJwt(token);
+            return decoded?.app_metadata?.role || decoded?.user_metadata?.role || null;
+        }
+
+       async function getDashboardPath() {
+    const token = getToken();
+    if (!token) return '/auth';
+
+    // 1. Intentar obtener el rol desde el perfil del auth‑service, enviando el token
+    try {
+        const res = await fetch('/api/auth/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            const role = data.role;
+            if (role) {
+                console.log('✅ Rol obtenido desde /api/auth/me:', role);
+                if (role === 'admin_horarios' || role === 'super_admin') {
+                    return '/horarios/admin/dashboard';
+                }
+                return '/horarios/user/dashboard';
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ No se pudo obtener el rol desde la API, usando valor por defecto.');
+    }
+
+    // 2. Si no se pudo obtener el rol por API, asumimos panel de usuario por defecto
+    console.log('ℹ️ Usando panel de usuario por defecto');
+    return '/horarios/user/dashboard';
+}
+
+        // Redirige automáticamente si ya hay sesión
+        async function redirectIfAuthenticated() {
+            if (getToken()) {
+                const path = await getDashboardPath();
+                window.location.replace(path);
+            }
+        }
+
+        // SISTEMA DE SONIDO MEJORADO
         class KeyboardSoundSystem {
             constructor() {
-                this.isSoundEnabled = true; // Sonido habilitado por defecto
+                this.isSoundEnabled = true;
                 this.audioContext = null;
                 this.gainNode = null;
                 this.audioBuffers = [];
                 this.isInitialized = false;
                 this.userHasInteracted = false;
                 this.silentAudio = null;
-                
-                // Crear un audio silencioso para activar permisos
                 this.createSilentAudio();
-                
-                // Inicializar cuando el usuario interactúe
                 this.setupUserInteraction();
             }
             
             createSilentAudio() {
-                // Crear un audio silencioso de 0.5 segundos
                 this.silentAudio = new Audio();
                 this.silentAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
                 this.silentAudio.volume = 0.001;
@@ -989,23 +1048,16 @@
             }
             
             setupUserInteraction() {
-                // Lista de eventos que pueden activar el audio
                 const interactionEvents = ['click', 'touchstart', 'keydown', 'mousedown'];
-                
                 interactionEvents.forEach(eventType => {
                     document.addEventListener(eventType, () => {
                         if (!this.userHasInteracted) {
                             this.userHasInteracted = true;
                             this.initializeAudioContext();
-                            
-                            // Reproducir audio silencioso para activar permisos
                             this.silentAudio.play().then(() => {
                                 this.silentAudio.pause();
                                 this.silentAudio.currentTime = 0;
-                                console.log('Permisos de audio activados');
-                            }).catch(e => {
-                                console.log('Audio no disponible en este navegador');
-                            });
+                            }).catch(e => {});
                         }
                     }, { once: true });
                 });
@@ -1013,7 +1065,6 @@
             
             initializeAudioContext() {
                 if (this.isInitialized) return;
-                
                 try {
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     this.gainNode = this.audioContext.createGain();
@@ -1021,55 +1072,39 @@
                     this.gainNode.gain.value = 0.15;
                     this.isInitialized = true;
                     this.createKeyboardSounds();
-                    console.log('AudioContext inicializado correctamente');
-                } catch (error) {
-                    console.warn('AudioContext no disponible:', error);
-                }
+                } catch (error) {}
             }
             
             createKeyboardSounds() {
                 if (!this.isInitialized) return;
-                
-                // Crear sonidos de teclado sintéticos
                 for (let i = 0; i < 3; i++) {
                     const buffer = this.audioContext.createBuffer(1, this.audioContext.sampleRate * 0.05, this.audioContext.sampleRate);
                     const data = buffer.getChannelData(0);
-                    
-                    // Generar sonido de teclado sintético
                     for (let j = 0; j < buffer.length; j++) {
                         const noise = Math.random() * 2 - 1;
                         const envelope = Math.exp(-j / (this.audioContext.sampleRate * 0.01));
                         data[j] = noise * envelope * 0.3;
                     }
-                    
                     this.audioBuffers.push(buffer);
                 }
             }
             
             playKeySound() {
                 if (!this.isSoundEnabled || !this.isInitialized || this.audioBuffers.length === 0) return;
-                
                 try {
                     const bufferSource = this.audioContext.createBufferSource();
                     const gainNode = this.audioContext.createGain();
-                    
                     const randomBuffer = this.audioBuffers[Math.floor(Math.random() * this.audioBuffers.length)];
-                    
                     bufferSource.buffer = randomBuffer;
                     bufferSource.connect(gainNode);
                     gainNode.connect(this.audioContext.destination);
-                    
                     const now = this.audioContext.currentTime;
                     gainNode.gain.setValueAtTime(0, now);
                     gainNode.gain.linearRampToValueAtTime(0.15, now + 0.001);
                     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-                    
                     bufferSource.start(now);
                     bufferSource.stop(now + 0.05);
-                    
-                } catch (error) {
-                    // Silenciar error, no es crítico
-                }
+                } catch (error) {}
             }
             
             playSpaceSound() {
@@ -1085,7 +1120,6 @@
             updateSoundUI(enabled) {
                 const icon = document.getElementById('soundIcon');
                 const wave = document.getElementById('soundWave');
-                
                 if (enabled) {
                     icon.className = 'fas fa-volume-up';
                     wave.classList.add('active');
@@ -1115,20 +1149,13 @@
                 if (this.started) return;
                 this.started = true;
                 this.isTyping = true;
-                
-                // Mostrar cursor
                 this.cursorElement.classList.remove('cursor-hidden');
-                
-                // Iniciar escritura
                 this.typeNextCharacter();
             }
             
             typeNextCharacter() {
                 if (this.currentCharIndex <= this.text.length) {
-                    // Mostrar texto hasta el carácter actual
                     this.textElement.textContent = this.text.substring(0, this.currentCharIndex);
-                    
-                    // Reproducir sonido si está habilitado
                     if (this.soundSystem && this.currentCharIndex > 0) {
                         if (this.text[this.currentCharIndex - 1] === ' ') {
                             this.soundSystem.playSpaceSound();
@@ -1136,31 +1163,16 @@
                             this.soundSystem.playKeySound();
                         }
                     }
-                    
                     this.currentCharIndex++;
                     this.charactersTyped++;
-                    
-                    // Velocidad variable para simular escritura real
                     let nextSpeed = this.speed;
-                    
-                    if (this.text[this.currentCharIndex] === ' ') {
-                        nextSpeed = this.speed * 0.7;
-                    }
-                    
-                    if (this.text[this.currentCharIndex - 1] === ' ') {
-                        nextSpeed += Math.random() * 50;
-                    }
-                    
+                    if (this.text[this.currentCharIndex] === ' ') nextSpeed = this.speed * 0.7;
+                    if (this.text[this.currentCharIndex - 1] === ' ') nextSpeed += Math.random() * 50;
                     nextSpeed += Math.random() * 30 - 15;
-                    
                     setTimeout(() => this.typeNextCharacter(), nextSpeed);
                 } else {
                     this.isTyping = false;
-                    
-                    setTimeout(() => {
-                        this.cursorElement.classList.add('cursor-hidden');
-                    }, 300);
-                    
+                    setTimeout(() => this.cursorElement.classList.add('cursor-hidden'), 300);
                     this.onComplete();
                 }
             }
@@ -1191,7 +1203,6 @@
         function createTechIcons() {
             const container = document.getElementById('tech-icons-container');
             const icons = ['💻', '⚡', '🔧', '📊', '🤖', '🔒', '📱', '🌐', '🧠', '🔗', '📅', '⏰', '🎓', '📚', '🔍', '🚀', '✨', '🌟'];
-            
             for (let i = 0; i < 20; i++) {
                 const icon = document.createElement('div');
                 icon.className = 'tech-icon';
@@ -1209,32 +1220,25 @@
         function initHeroCanvas() {
             const canvas = document.getElementById('hero-canvas');
             if (!canvas) return;
-            
             const ctx = canvas.getContext('2d');
-            
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
             }
-            
             function draw() {
                 const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
                 gradient.addColorStop(0, '#0a0e17');
                 gradient.addColorStop(1, '#1a1a2e');
-                
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
                 ctx.strokeStyle = 'rgba(0, 255, 255, 0.03)';
                 ctx.lineWidth = 1;
-                
                 for (let x = 0; x < canvas.width; x += 50) {
                     ctx.beginPath();
                     ctx.moveTo(x, 0);
                     ctx.lineTo(x, canvas.height);
                     ctx.stroke();
                 }
-                
                 for (let y = 0; y < canvas.height; y += 50) {
                     ctx.beginPath();
                     ctx.moveTo(0, y);
@@ -1242,12 +1246,7 @@
                     ctx.stroke();
                 }
             }
-            
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-                draw();
-            });
-            
+            window.addEventListener('resize', () => { resizeCanvas(); draw(); });
             resizeCanvas();
             draw();
         }
@@ -1255,153 +1254,131 @@
         // Efecto de aparición gradual para tarjetas
         function initScrollAnimations() {
             const featureCards = document.querySelectorAll('.feature-card');
-            
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry, index) => {
                     if (entry.isIntersecting) {
-                        setTimeout(() => {
-                            entry.target.classList.add('visible');
-                        }, index * 100);
+                        setTimeout(() => entry.target.classList.add('visible'), index * 100);
                     }
                 });
-            }, {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            });
-            
-            featureCards.forEach(card => {
-                observer.observe(card);
-            });
+            }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+            featureCards.forEach(card => observer.observe(card));
         }
         
         // Variables globales
         let typewriter = null;
         let soundSystem = null;
         
+        // Adaptar enlaces según sesión (token en localStorage)
+        async function adaptLinks() {
+            const token = getToken();
+            const loginLink = document.getElementById('login-link');
+            const ctaButton = document.getElementById('cta-button');
+            if (token) {
+                const dashboardPath = await getDashboardPath();
+                if (loginLink) {
+                    loginLink.href = dashboardPath;
+                    loginLink.textContent = 'Ir al Panel';
+                }
+                if (ctaButton) {
+                    ctaButton.href = dashboardPath;
+                    ctaButton.innerHTML = '<i class="fas fa-th-large"></i> IR AL PANEL';
+                }
+            } else {
+                if (loginLink) loginLink.href = '/auth';
+                if (ctaButton) ctaButton.href = '/auth';
+            }
+        }
+        
         // Inicializar todo cuando la página carga
-        document.addEventListener('DOMContentLoaded', () => {
-            // Crear efectos visuales
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Redirigir inmediatamente si ya hay sesión
+           await redirectIfAuthenticated();
+           console.log('Redirección automática DESACTIVADA - token presente:', !!getToken());
+            
             createFloatingParticles();
             createTechIcons();
             initHeroCanvas();
             
-            // Inicializar sistema de sonido mejorado
             soundSystem = new KeyboardSoundSystem();
             
-            // Configurar botón de toggle de sonido
             const soundToggle = document.getElementById('soundToggle');
-            soundToggle.addEventListener('click', () => {
-                soundSystem.toggle();
-            });
+            soundToggle.addEventListener('click', () => soundSystem.toggle());
             
-            // Iniciar efecto de escritura
+            // Adaptar enlaces según sesión
+            await adaptLinks();
+            
             setTimeout(() => {
-                typewriter = new EnhancedTypewriter(
-                    'typing-text',
-                    'typing-cursor',
-                    'GESTIÓN INTELIGENTE DE HORARIOS ACADÉMICOS',
-                    {
-                        speed: 65,
-                        soundSystem: soundSystem,
-                        onComplete: () => {
-                            console.log('Efecto de escritura completado');
-                        }
-                    }
-                );
+                typewriter = new EnhancedTypewriter('typing-text', 'typing-cursor', 'GESTIÓN INTELIGENTE DE HORARIOS ACADÉMICOS', {
+                    speed: 65,
+                    soundSystem: soundSystem,
+                    onComplete: () => { console.log('Efecto de escritura completado'); }
+                });
                 typewriter.start();
             }, 800);
             
-            // Permitir que el usuario haga clic para saltar el tipado
             const typingContainer = document.querySelector('.typing-container');
             typingContainer.addEventListener('click', () => {
-                if (typewriter && typewriter.isTyping) {
-                    typewriter.skip();
-                }
+                if (typewriter && typewriter.isTyping) typewriter.skip();
             });
             
-            // Inicializar animaciones al hacer scroll
             initScrollAnimations();
             
-            // Efecto de seguimiento del mouse para partículas
             document.addEventListener('mousemove', (e) => {
                 const particles = document.querySelectorAll('.particle');
                 particles.forEach(particle => {
                     const rect = particle.getBoundingClientRect();
                     const x = rect.left + rect.width / 2;
                     const y = rect.top + rect.height / 2;
-                    const distance = Math.sqrt(
-                        Math.pow(e.clientX - x, 2) + Math.pow(e.clientY - y, 2)
-                    );
-                    
+                    const distance = Math.sqrt(Math.pow(e.clientX - x, 2) + Math.pow(e.clientY - y, 2));
                     if (distance < 100) {
                         particle.style.transform = `translate(${(e.clientX - x) * 0.1}px, ${(e.clientY - y) * 0.1}px)`;
                     }
                 });
             });
             
-            // Efecto de scroll suave para enlaces
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     e.preventDefault();
-                    
                     const targetId = this.getAttribute('href');
                     if (targetId === '#') return;
-                    
                     const targetElement = document.querySelector(targetId);
                     if (targetElement) {
-                        window.scrollTo({
-                            top: targetElement.offsetTop - 80,
-                            behavior: 'smooth'
-                        });
+                        window.scrollTo({ top: targetElement.offsetTop - 80, behavior: 'smooth' });
                         history.pushState(null, null, targetId);
                     }
                 });
             });
             
-            // Animación de entrada de la página
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-                document.body.style.transition = 'opacity 0.5s ease';
-            }, 100);
+            setTimeout(() => { document.body.style.opacity = '1'; document.body.style.transition = 'opacity 0.5s ease'; }, 100);
             
-            // Interactividad con el robot compacto
             const robotElement = document.querySelector('.robot');
             const hologram = document.querySelector('.mini-hologram');
-            
             if (robotElement) {
                 robotElement.addEventListener('mouseenter', function() {
                     this.style.filter = 'drop-shadow(0 0 20px rgba(0, 255, 255, 0.9))';
                     this.style.transform = 'scale(1.05)';
                     this.style.transition = 'all 0.3s ease';
-                    
                     if (hologram) {
                         hologram.style.boxShadow = '0 0 25px rgba(0, 255, 255, 0.4)';
                         hologram.style.transform = 'scale(1.08)';
                     }
                 });
-                
                 robotElement.addEventListener('mouseleave', function() {
                     this.style.filter = 'drop-shadow(0 0 15px rgba(0, 255, 255, 0.7))';
                     this.style.transform = 'scale(1)';
-                    
                     if (hologram) {
                         hologram.style.boxShadow = '';
                         hologram.style.transform = '';
                     }
                 });
-                
                 robotElement.addEventListener('click', function() {
-                    if (soundSystem && soundSystem.isSoundEnabled) {
-                        soundSystem.playKeySound();
-                    }
-                    
+                    if (soundSystem && soundSystem.isSoundEnabled) soundSystem.playKeySound();
                     const timeSlots = document.querySelectorAll('.time-slot');
                     timeSlots.forEach((slot, index) => {
                         setTimeout(() => {
                             slot.style.background = 'rgba(0, 255, 255, 0.25)';
                             slot.style.borderColor = 'rgba(0, 255, 255, 0.6)';
                             slot.style.transform = 'scale(1.1)';
-                            
                             setTimeout(() => {
                                 slot.style.background = 'rgba(0, 255, 255, 0.08)';
                                 slot.style.borderColor = 'rgba(0, 255, 255, 0.2)';
@@ -1409,15 +1386,10 @@
                             }, 300);
                         }, index * 100);
                     });
-                    
                     const core = document.querySelector('.power-core');
                     core.style.boxShadow = '0 0 25px #00ffff, 0 0 50px #00ffff, inset 0 0 12px white';
-                    
-                    setTimeout(() => {
-                        core.style.boxShadow = '';
-                    }, 500);
+                    setTimeout(() => { core.style.boxShadow = ''; }, 500);
                 });
-                
                 if (hologram) {
                     hologram.addEventListener('click', function(e) {
                         e.stopPropagation();

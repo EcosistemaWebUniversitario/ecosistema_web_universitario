@@ -1,11 +1,9 @@
 // src/routes/usuario.js
 const express = require('express');
 const router  = express.Router();
-const path    = require('path');
 const { supabase } = require('../db/supabase');
 const { loginRequired } = require('../middleware/auth');
 
-const FRONTEND    = path.resolve(__dirname, '../../frontend');
 const DIAS_NOMBRES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
 function addDays(isoDate, days) {
@@ -28,14 +26,13 @@ async function obtenerHorario(añoParam, semestreParam) {
   return data?.[0] || null;
 }
 
-// GET /user/horario-semestral-completo
+// Redirigir vistas antiguas al nuevo frontend
 router.get('/user/horario-semestral-completo', loginRequired, (req, res) => {
-  if (req.session.userRole === 'admin') return res.redirect('/dashboard');
-  res.sendFile(path.join(FRONTEND, 'user/horario_semestral_completo.html'));
+  res.redirect('/horarios');
 });
 
-// GET /api/horarios-disponibles-usuario
-router.get('/api/horarios-disponibles-usuario', loginRequired, async (req, res) => {
+// GET /horarios-disponibles
+router.get('/horarios-disponibles', loginRequired, async (req, res) => {
   try {
     const { data: horarios } = await supabase.from('horario_general').select('*').eq('activo', true)
       .order('año_carrera').order('semestre').order('creado_en', { ascending: false });
@@ -59,8 +56,8 @@ router.get('/api/horarios-disponibles-usuario', loginRequired, async (req, res) 
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// GET /api/mi-horario/vista-semestral-completa
-router.get('/api/mi-horario/vista-semestral-completa', loginRequired, async (req, res) => {
+// GET /mi-horario/vista-semestral-completa
+router.get('/mi-horario/vista-semestral-completa', loginRequired, async (req, res) => {
   try {
     const h = await obtenerHorario(req.query.ano ? parseInt(req.query.ano) : null, req.query.semestre ? parseInt(req.query.semestre) : null);
     if (!h) return res.json({ success: false, message: 'No hay horarios activos' });
@@ -101,8 +98,8 @@ router.get('/api/mi-horario/vista-semestral-completa', loginRequired, async (req
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// GET /api/estadisticas
-router.get('/api/estadisticas', loginRequired, async (req, res) => {
+// GET /estadisticas
+router.get('/estadisticas', loginRequired, async (req, res) => {
   try {
     const [a, p, t, hg] = await Promise.all([
       supabase.from('asignatura').select('id', { count: 'exact', head: true }),
@@ -114,8 +111,8 @@ router.get('/api/estadisticas', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/calendario-semanal
-router.get('/api/calendario-semanal', loginRequired, async (req, res) => {
+// GET /calendario-semanal
+router.get('/calendario-semanal', loginRequired, async (req, res) => {
   try {
     const h = await obtenerHorario(req.query.ano ? parseInt(req.query.ano) : null, req.query.semestre ? parseInt(req.query.semestre) : null);
     if (!h) return res.json({ success: false, message: 'No hay horarios activos' });
@@ -143,6 +140,116 @@ router.get('/api/calendario-semanal', loginRequired, async (req, res) => {
 
     res.json({ success: true, semana_actual: semana, calendario,
       total_clases_semana: (slots || []).length, hoy: fmt(hoy), horario_info: h });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// GET /semana/:semana – calendario de una semana específica
+router.get('/semana/:semana', loginRequired, async (req, res) => {
+  try {
+    const semana = parseInt(req.params.semana);
+    const { ano, semestre } = req.query;
+    const h = await obtenerHorario(
+      ano ? parseInt(ano) : null,
+      semestre ? parseInt(semestre) : null
+    );
+    if (!h) return res.json({ success: false, message: 'No hay horarios activos' });
+
+    // Calcular fechas de la semana
+    const inicio = new Date(h.fecha_inicio);
+    inicio.setDate(inicio.getDate() + (semana - 1) * 7);
+    const fin = new Date(inicio);
+    fin.setDate(inicio.getDate() + 6);
+
+    const { data: slots } = await supabase
+      .from('horario_semanal')
+      .select('*, asignatura(codigo,nombre,color), profesor(nombres,apellidos), turno(hora_inicio,hora_fin,nombre)')
+      .eq('horario_general_id', h.id)
+      .eq('semana_numero', semana)
+      .order('dia_semana')
+      .order('turno_id');
+
+    const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+    const calendario = dias.map((dia, idx) => {
+      const clases = (slots || []).filter(s => s.dia_semana === idx).map(s => ({
+        hora: `${s.turno?.hora_inicio} - ${s.turno?.hora_fin}`,
+        asignatura: s.asignatura?.codigo || '',
+        nombre: s.asignatura?.nombre || '',
+        profesor: s.profesor ? `${s.profesor.nombres} ${s.profesor.apellidos}` : '',
+        color: s.asignatura?.color || '#4361ee',
+        es_examen: Boolean(s.es_examen),
+        aula: 'Por asignar'
+      }));
+      return {
+        dia,
+        fecha: fmt(new Date(inicio.getTime() + idx * 86400000).toISOString().slice(0, 10)),
+        es_hoy: false,
+        clases,
+        total_clases: clases.length
+      };
+    });
+
+    res.json({ success: true, calendario, semana_actual: semana, total_semanas: h.semanas_totales });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /mis-asignaturas – asignaturas del estudiante según año y semestre
+router.get('/mis-asignaturas', loginRequired, async (req, res) => {
+  try {
+    const { ano, semestre } = req.query;
+    if (!ano || !semestre) {
+      return res.json({ success: true, asignaturas: [], tipo: 'estudiante' });
+    }
+
+    const { data: asignaturas, error } = await supabase
+      .from('asignatura')
+      .select('*, profesor(nombres, apellidos)')
+      .eq('año_academico', parseInt(ano))
+      .eq('periodo', parseInt(semestre))
+      .order('codigo');
+
+    if (error) throw error;
+
+    const lista = (asignaturas || []).map(a => ({
+      ...a,
+      profesor_nombre: a.profesor ? `${a.profesor.nombres} ${a.profesor.apellidos}` : null,
+      horas_semanales: a.horas_presenciales,
+      turnos_semanales: Math.ceil(a.horas_presenciales / 1.5),
+      profesor: undefined
+    }));
+
+    res.json({ success: true, asignaturas: lista, tipo: 'estudiante' });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// GET /estadisticas-personales – estadísticas para el dashboard del estudiante
+router.get('/estadisticas-personales', loginRequired, async (req, res) => {
+  try {
+    const { ano, semestre } = req.query;
+    const h = await obtenerHorario(
+      ano ? parseInt(ano) : null,
+      semestre ? parseInt(semestre) : null
+    );
+
+    const { data: asignaturas } = await supabase
+      .from('asignatura')
+      .select('id, horas_presenciales')
+      .eq('año_academico', parseInt(ano || '1'))
+      .eq('periodo', parseInt(semestre || '1'));
+
+    const totalAsignaturas = (asignaturas || []).length;
+    const totalHoras = (asignaturas || []).reduce((sum, a) => sum + (a.horas_presenciales || 0), 0);
+
+    res.json({
+      success: true,
+      tipo_usuario: 'estudiante',
+      estadisticas: {
+        total_asignaturas: totalAsignaturas,
+        total_horas_semanales: totalHoras,
+        carrera: h?.carrera || 'Sin carrera',
+        año: h?.año_carrera || '?',
+        porcentaje_asignado: h ? Math.round((totalHoras / (h.semanas_clases * 5 * 1.5)) * 100) : 0
+      }
+    });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 

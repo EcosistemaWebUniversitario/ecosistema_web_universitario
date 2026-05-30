@@ -2,10 +2,10 @@
 const express = require('express');
 const router  = express.Router();
 const { supabase } = require('../db/supabase');
-const { loginRequired } = require('../middleware/auth');
+const { loginRequired, adminRequired } = require('../middleware/auth');
 
-// GET /api/profesores
-router.get('/api/profesores', loginRequired, async (req, res) => {
+// GET /profesores
+router.get('/', loginRequired, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('profesor')
@@ -21,8 +21,8 @@ router.get('/api/profesores', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/profesores/activos
-router.get('/api/profesores/activos', loginRequired, async (req, res) => {
+// GET /profesores/activos
+router.get('/activos', loginRequired, async (req, res) => {
   try {
     const { data, error } = await supabase.from('profesor').select('*').eq('activo', true).order('apellidos').order('nombres');
     if (error) throw error;
@@ -30,8 +30,8 @@ router.get('/api/profesores/activos', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/profesores/:id
-router.get('/api/profesores/:id', loginRequired, async (req, res) => {
+// GET /profesores/:id
+router.get('/:id', loginRequired, async (req, res) => {
   try {
     const { data, error } = await supabase.from('profesor').select('*').eq('id', req.params.id).single();
     if (error || !data) return res.status(404).json({ error: 'Profesor no encontrado' });
@@ -39,9 +39,8 @@ router.get('/api/profesores/:id', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/profesores
-router.post('/api/profesores', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// POST /profesores
+router.post('/', loginRequired, adminRequired, async (req, res) => {
   const { codigo, nombres, apellidos, categoria_academica, categoria_cientifica, email, telefono } = req.body;
   if (!codigo || !nombres || !apellidos) return res.status(400).json({ error: 'Faltan campos requeridos' });
 
@@ -57,9 +56,8 @@ router.post('/api/profesores', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT /api/profesores/:id
-router.put('/api/profesores/:id', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// PUT /profesores/:id
+router.put('/:id', loginRequired, adminRequired, async (req, res) => {
   const { codigo, nombres, apellidos, categoria_academica, categoria_cientifica, email, telefono, activo } = req.body;
 
   try {
@@ -79,9 +77,8 @@ router.put('/api/profesores/:id', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// DELETE /api/profesores/:id
-router.delete('/api/profesores/:id', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// DELETE /profesores/:id
+router.delete('/:id', loginRequired, adminRequired, async (req, res) => {
   try {
     const { error } = await supabase.from('profesor').delete().eq('id', req.params.id);
     if (error) throw error;

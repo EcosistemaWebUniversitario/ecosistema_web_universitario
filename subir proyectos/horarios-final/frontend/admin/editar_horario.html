@@ -245,7 +245,6 @@
             text-align: center;
         }
         
-        /* Asegurar que la tabla tenga el formato correcto */
         .table {
             width: 100%;
             table-layout: fixed;
@@ -272,7 +271,7 @@
                     <small id="headerInfo">Cargando información...</small>
                 </div>
                 <div>
-                    <button class="btn btn-light btn-sm me-2" onclick="window.location.href='/dashboard'">
+                    <button class="btn btn-light btn-sm me-2" onclick="window.location.href='/horarios/admin/dashboard'">
                         <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
                     </button>
                     <button class="btn btn-warning btn-sm me-2" onclick="generarAutomatico()">
@@ -293,7 +292,6 @@
     
     <div class="container-fluid mt-3">
         <div class="row">
-            <!-- Panel izquierdo -->
             <div class="col-lg-3">
                 <div class="stats-card">
                     <h2 class="h6"><i class="fas fa-chart-bar me-2"></i>Estadísticas</h2>
@@ -380,16 +378,12 @@
                 </div>
             </div>
             
-            <!-- Panel central -->
             <div class="col-lg-9">
-                <!-- Pestañas de semanas -->
                 <div class="tabs-container mb-3">
                     <div id="semanasTabs" class="d-flex" role="tablist">
-                        <!-- Dinámico -->
                     </div>
                 </div>
                 
-                <!-- Horario Grid -->
                 <div class="card">
                     <div class="card-body">
                         <div id="gridContainer">
@@ -415,7 +409,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body" id="detallesContenido">
-                    <!-- Dinámico -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -439,7 +432,6 @@
                     <div class="mb-3">
                         <label for="semanaSeleccionada" class="form-label">Semana:</label>
                         <select id="semanaSeleccionada" class="form-select">
-                            <!-- Dinámico -->
                         </select>
                     </div>
                     <div class="mb-3">
@@ -447,7 +439,6 @@
                         <input type="date" id="fechaInicioSemana" class="form-control">
                     </div>
                     <div id="infoSemana" class="alert alert-info small">
-                        <!-- Info -->
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -463,7 +454,43 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.js"></script>
     <script>
-        // Obtener el ID del horario desde la URL (ej: /admin/horarios/editar/5)
+        // ═══════════════════════════════════════════
+        // AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
+        // ═══════════════════════════════════════════
+        function getToken() {
+            return localStorage.getItem('token') ??
+                   localStorage.getItem('access_token') ??
+                   localStorage.getItem('authToken');
+        }
+
+        function requireAuth() {
+            if (!getToken()) {
+                window.location.href = '/auth';
+                return false;
+            }
+            return true;
+        }
+
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            const token = getToken();
+            if (token) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            return originalFetch(url, options);
+        };
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('authToken');
+            window.location.href = '/auth';
+        }
+
+        // ═══════════════════════════════════════════
+        // LÓGICA DEL EDITOR DE HORARIOS
+        // ═══════════════════════════════════════════
         const horarioId = parseInt(window.location.pathname.split('/').pop());
         console.log(`🔍 ID del horario obtenido: ${horarioId}`);
         
@@ -474,25 +501,24 @@
         let dragulaInstance = null;
         let slotActual = null;
         
-        // Inicializar
         document.addEventListener('DOMContentLoaded', async function() {
+            if (!requireAuth()) return;
+            
             console.log(`🚀 Iniciando editor para horario ID: ${horarioId}`);
             await cargarHorario();
             inicializarDragDrop();
         });
         
-        // Cargar horario - Versión robusta
         async function cargarHorario() {
             try {
                 console.log(`🔄 Cargando horario ID: ${horarioId}`);
                 
-                const response = await fetch(`/api/horarios/${horarioId}`);
+                const response = await fetch(`/api/horarios/horarios/${horarioId}`);
                 if (!response.ok) throw new Error(`HTTP ${response.status}: Error al cargar`);
                 
                 const data = await response.json();
                 console.log('✅ Datos recibidos (estructura):', data);
                 
-                // Detectar la estructura de la respuesta
                 if (data.horario) {
                     horarioData = data.horario;
                     asignaturasDisponibles = data.asignaturas_disponibles || [];
@@ -525,12 +551,11 @@
             }
         }
         
-        // Actualizar estadísticas
         async function actualizarEstadisticas() {
             try {
                 console.log(`📊 Actualizando estadísticas para horario ${horarioId}...`);
                 
-                const response = await fetch(`/api/horarios/${horarioId}/estadisticas`);
+                const response = await fetch(`/api/horarios/horarios/${horarioId}/estadisticas`);
                 
                 if (!response.ok) {
                     console.warn('❌ Ruta de estadísticas no disponible, usando cálculo local...');
@@ -558,10 +583,9 @@
             }
         }
         
-        // Función de respaldo: calcular estadísticas localmente
         async function calcularEstadisticasLocales() {
             try {
-                const response = await fetch(`/api/horarios/${horarioId}`);
+                const response = await fetch(`/api/horarios/horarios/${horarioId}`);
                 const data = await response.json();
                 
                 const totalSlots = 22 * 5 * 6;
@@ -585,7 +609,6 @@
             }
         }
         
-        // Generar pestañas de semanas
         function generarTabsSemanas() {
             const semanasTabs = document.getElementById('semanasTabs');
             semanasTabs.innerHTML = '';
@@ -618,7 +641,6 @@
             }
         }
         
-        // Generar panel de asignaturas
         function generarPanelAsignaturas() {
             const panel = document.getElementById('panelAsignaturas');
             const contador = document.getElementById('contadorAsignaturas');
@@ -656,7 +678,6 @@
             contador.textContent = `${asignaturasDisponibles.length} asignaturas`;
         }
         
-        // Cargar una semana específica (corregida la generación de la tabla)
         async function cargarSemana(semanaNumero) {
             const gridContainer = document.getElementById('gridContainer');
             
@@ -680,7 +701,6 @@
             html += `</tr></thead><tbody>`;
             
             turnos.forEach(turno => {
-                // Iniciar fila para este turno
                 html += `<tr>
                             <th scope="row" class="turno-header">
                                 <div>${turno.nombre}</div>
@@ -707,7 +727,6 @@
                              </td>`;
                 }
                 
-                // Cerrar fila
                 html += `</tr>`;
             });
             
@@ -721,10 +740,9 @@
             }, 100);
         }
         
-        // Cargar datos de los slots desde la API
         async function cargarDatosSlots(semanaNumero) {
             try {
-                const response = await fetch(`/api/horarios/${horarioId}`);
+                const response = await fetch(`/api/horarios/horarios/${horarioId}`);
                 const data = await response.json();
                 
                 const asignacionesSemana = data.asignaciones.filter(a => a.semana_numero == semanaNumero);
@@ -743,7 +761,6 @@
                     }
                 });
                 
-                // Actualizar fechas en encabezados
                 for (let dia = 0; dia < 5; dia++) {
                     const fechaElement = document.getElementById(`fecha-texto-${semanaNumero}-${dia}`);
                     if (fechaElement) {
@@ -778,7 +795,6 @@
             }
         }
         
-        // Actualizar la UI de un slot individual
         function actualizarSlotUI(slotElement, asignacion) {
             const esViernes = asignacion.dia_semana === 4;
             
@@ -814,7 +830,6 @@
             slotElement.dataset.asignacion = JSON.stringify(asignacion);
         }
         
-        // Inicializar Drag & Drop
         function inicializarDragDrop() {
             if (dragulaInstance) {
                 dragulaInstance.destroy();
@@ -856,7 +871,7 @@
                     };
                     
                     try {
-                        const response = await fetch(`/api/horarios/${horarioId}/asignar`, {
+                        const response = await fetch(`/api/horarios/horarios/${horarioId}/asignar`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(data)
@@ -884,7 +899,7 @@
                     if (!slotOrigen.asignatura_id) return;
                     
                     try {
-                        await fetch(`/api/horarios/${horarioId}/asignar`, {
+                        await fetch(`/api/horarios/horarios/${horarioId}/asignar`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -895,7 +910,7 @@
                             })
                         });
                         
-                        const response = await fetch(`/api/horarios/${horarioId}/asignar`, {
+                        const response = await fetch(`/api/horarios/horarios/${horarioId}/asignar`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -914,7 +929,7 @@
                             actualizarEstadisticas();
                             mostrarNotificacion('success', '✅ Asignación movida');
                         } else {
-                            await fetch(`/api/horarios/${horarioId}/asignar`, {
+                            await fetch(`/api/horarios/horarios/${horarioId}/asignar`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -936,7 +951,7 @@
                     if (!slotData.asignatura_id) return;
                     
                     try {
-                        const response = await fetch(`/api/horarios/${horarioId}/limpiar-slot`, {
+                        const response = await fetch(`/api/horarios/horarios/${horarioId}/limpiar-slot`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -968,7 +983,6 @@
             });
         }
         
-        // Mostrar detalles del slot (modal)
         function mostrarDetallesSlot(slotElement) {
             slotActual = slotElement;
             const asignacion = JSON.parse(slotElement.dataset.asignacion || '{}');
@@ -1027,14 +1041,13 @@
             modal.show();
         }
         
-        // Limpiar slot actual desde el modal
         async function limpiarSlotActual() {
             if (!slotActual) return;
             
             const asignacion = JSON.parse(slotActual.dataset.asignacion || '{}');
             
             try {
-                const response = await fetch(`/api/horarios/${horarioId}/limpiar-slot`, {
+                const response = await fetch(`/api/horarios/horarios/${horarioId}/limpiar-slot`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1060,14 +1073,13 @@
             }
         }
         
-        // Generar automático
         async function generarAutomatico() {
             if (!confirm('¿Generar horario automáticamente? Esto reemplazará las asignaciones actuales en mañanas (Lun-Jue).')) {
                 return;
             }
             
             try {
-                const response = await fetch(`/api/horarios/${horarioId}/generar-automatico`, {
+                const response = await fetch(`/api/horarios/horarios/${horarioId}/generar-automatico`, {
                     method: 'POST'
                 });
                 
@@ -1086,14 +1098,13 @@
             }
         }
         
-        // Limpiar todo el horario
         async function limpiarHorario() {
             if (!confirm('¿Está seguro de limpiar todo el horario?')) {
                 return;
             }
             
             try {
-                const response = await fetch(`/api/horarios/${horarioId}/limpiar-todo`, {
+                const response = await fetch(`/api/horarios/horarios/${horarioId}/limpiar-todo`, {
                     method: 'POST'
                 });
                 
@@ -1111,10 +1122,9 @@
             }
         }
         
-        // Exportar JSON
         async function exportarHorario() {
             try {
-                const response = await fetch(`/api/horarios/${horarioId}/exportar`);
+                const response = await fetch(`/api/horarios/horarios/${horarioId}/exportar`);
                 const data = await response.json();
                 
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1134,10 +1144,9 @@
             }
         }
         
-        // Exportar Excel
         async function exportarExcel() {
             try {
-                const response = await fetch(`/api/horarios/${horarioId}/exportar-excel`);
+                const response = await fetch(`/api/horarios/horarios/${horarioId}/exportar-excel`);
                 
                 if (!response.ok) throw new Error('Error al exportar');
                 
@@ -1158,10 +1167,9 @@
             }
         }
         
-        // Mostrar vista semestral (modal)
         async function mostrarTodasSemanas() {
             try {
-                const response = await fetch(`/api/horarios/${horarioId}/vista-semestral-detallada`);
+                const response = await fetch(`/api/horarios/horarios/${horarioId}/vista-semestral-detallada`);
                 const data = await response.json();
                 
                 if (!data.success) {
@@ -1180,7 +1188,6 @@
                                 </div>
                                 <div class="modal-body" style="background-color: #f8f9fa; overflow-y: auto;">
                                     <div class="container-fluid" id="contenedorVistaSemestral">
-                                        <!-- Las tablas se generarán aquí dinámicamente -->
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -1434,12 +1441,10 @@
             ventanaImpresion.document.close();
         }
         
-        // Guardar cambios (placeholder)
         function guardarCambios() {
             mostrarNotificacion('success', '✅ Los cambios se guardan automáticamente');
         }
         
-        // Abrir modal de fechas
         function abrirModalFechas() {
             const modal = new bootstrap.Modal(document.getElementById('modalFechaSemana'));
             
@@ -1463,7 +1468,7 @@
         
         async function cargarFechaSemana(semanaNumero) {
             try {
-                const response = await fetch(`/api/horarios/${horarioId}`);
+                const response = await fetch(`/api/horarios/horarios/${horarioId}`);
                 const data = await response.json();
                 
                 const asignaciones = data.asignaciones;
@@ -1503,7 +1508,7 @@
             }
             
             try {
-                const response = await fetch(`/api/horarios/${horarioId}/actualizar-fecha-semana`, {
+                const response = await fetch(`/api/horarios/horarios/${horarioId}/actualizar-fecha-semana`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1537,7 +1542,6 @@
             }
         }
         
-        // Mostrar notificación
         function mostrarNotificacion(tipo, mensaje) {
             const alert = document.createElement('div');
             alert.className = `alert alert-${tipo} alert-dismissible fade show notificacion`;

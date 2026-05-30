@@ -8,18 +8,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #4361ee;           /* Azul eléctrico */
-            --primary-dark: #3a0ca3;      /* Azul oscuro */
-            --secondary: #7209b7;         /* Púrpura */
-            --accent: #00ffff;            /* Cian brillante */
-            --success: #4cc9f0;          /* Azul claro */
-            --warning: #f8961e;          /* Naranja */
-            --danger: #f72585;           /* Rosa fuerte */
-            --dark: #1a1a2e;             /* Fondo oscuro */
-            --darker: #0a0e17;           /* Fondo más oscuro */
-            --light: #f8f9fa;            /* Blanco suave */
-            --gray: #8892b0;             /* Texto gris */
-            --card-bg: rgba(255, 255, 255, 0.05); /* Fondo de tarjetas */
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --secondary: #7209b7;
+            --accent: #00ffff;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --danger: #f72585;
+            --dark: #1a1a2e;
+            --darker: #0a0e17;
+            --light: #f8f9fa;
+            --gray: #8892b0;
+            --card-bg: rgba(255, 255, 255, 0.05);
         }
         
         body {
@@ -29,7 +29,6 @@
             min-height: 100vh;
         }
         
-        /* Navbar mejorada */
         .navbar-custom {
             background: rgba(26, 26, 46, 0.95) !important;
             -webkit-backdrop-filter: blur(10px);
@@ -69,12 +68,10 @@
             border-bottom: 2px solid var(--accent);
         }
         
-        /* Contenedor principal */
         .container-fluid {
             padding: 30px;
         }
         
-        /* Título */
         h1 {
             color: white;
             font-weight: 600;
@@ -93,7 +90,6 @@
             font-size: 1.8rem;
         }
         
-        /* Botón principal */
         .btn-primary-custom {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             border: none;
@@ -114,11 +110,6 @@
             background: linear-gradient(135deg, #5a75f0 0%, #4a1cbd 100%);
         }
         
-        .btn-primary-custom:active {
-            transform: translateY(-1px);
-        }
-        
-        /* Tarjeta principal */
         .card-custom {
             background: var(--card-bg);
             -webkit-backdrop-filter: blur(15px);
@@ -134,7 +125,6 @@
             padding: 25px;
         }
         
-        /* Tabla mejorada */
         .table-custom {
             background: transparent;
             border-radius: 15px;
@@ -173,7 +163,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
-        /* Botones de acción */
         .btn-outline-primary {
             border: 2px solid var(--primary);
             color: var(--primary);
@@ -206,7 +195,6 @@
             box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
         }
         
-        /* Badges mejorados */
         .badge-activo {
             background: linear-gradient(135deg, rgba(76, 201, 240, 0.2) 0%, rgba(67, 97, 238, 0.2) 100%);
             color: var(--accent);
@@ -236,7 +224,6 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        /* Modal mejorado */
         .modal-content {
             background: var(--dark);
             border: 1px solid rgba(67, 97, 238, 0.3);
@@ -301,7 +288,6 @@
             padding: 20px 30px;
         }
         
-        /* Botones del modal */
         .btn-secondary {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -316,7 +302,6 @@
             transform: translateY(-2px);
         }
         
-        /* Estado de carga */
         .loading-state {
             text-align: center;
             padding: 50px 20px;
@@ -332,7 +317,6 @@
             color: var(--accent) !important;
         }
         
-        /* Fila vacía */
         .empty-state {
             text-align: center;
             padding: 50px 20px;
@@ -345,7 +329,6 @@
             opacity: 0.5;
         }
         
-        /* Responsive */
         @media (max-width: 768px) {
             .container-fluid {
                 padding: 20px;
@@ -375,7 +358,6 @@
             }
         }
         
-        /* Animaciones */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -385,7 +367,6 @@
             animation: fadeIn 0.5s ease forwards;
         }
         
-        /* Scrollbar personalizado */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -405,7 +386,6 @@
             background: linear-gradient(135deg, #5a75f0 0%, #4a1cbd 100%);
         }
         
-        /* Enlaces de email */
         a.text-info {
             color: var(--accent) !important;
             text-decoration: none;
@@ -422,7 +402,7 @@
     <!-- Navbar Futurista -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/dashboard">
+            <a class="navbar-brand" href="/horarios/admin/dashboard">
                 <i class="fas fa-brain-circuit"></i> SISTEMA DE HORARIOS
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
@@ -432,22 +412,22 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/dashboard">
+                        <a class="nav-link" href="/horarios/admin/dashboard">
                             <i class="fas fa-tachometer-alt me-1"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/asignaturas">
+                        <a class="nav-link" href="/horarios/admin/asignaturas">
                             <i class="fas fa-book me-1"></i> Asignaturas
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/admin/profesores" aria-current="page">
+                        <a class="nav-link active" href="/horarios/admin/profesores" aria-current="page">
                             <i class="fas fa-chalkboard-teacher me-1"></i> Profesores
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/horarios">
+                        <a class="nav-link" href="/horarios/admin/horarios">
                             <i class="fas fa-calendar-alt me-1"></i> Horarios
                         </a>
                     </li>
@@ -620,13 +600,49 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ═══════════════════════════════════════════
+        // AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
+        // ═══════════════════════════════════════════
+        function getToken() {
+            return localStorage.getItem('token') ??
+                   localStorage.getItem('access_token') ??
+                   localStorage.getItem('authToken');
+        }
+
+        function requireAuth() {
+            if (!getToken()) {
+                window.location.href = '/auth';
+                return false;
+            }
+            return true;
+        }
+
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            const token = getToken();
+            if (token) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            return originalFetch(url, options);
+        };
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('authToken');
+            window.location.href = '/auth';
+        }
+
+        // ═══════════════════════════════════════════
+        // LÓGICA DE GESTIÓN DE PROFESORES
+        // ═══════════════════════════════════════════
         let profesores = [];
         let modalInstance = null;
         
-        // Función para cargar profesores
         async function cargarProfesores() {
             try {
-                const response = await fetch('/api/profesores');
+                const response = await fetch('/api/horarios/profesores');
                 if (response.ok) {
                     profesores = await response.json();
                     renderizarTabla();
@@ -639,11 +655,9 @@
             }
         }
         
-        // Función para renderizar la tabla
         function renderizarTabla() {
             const tbody = document.getElementById('tablaProfesores');
             
-            // Remover fila de carga
             const loadingRow = document.getElementById('loading-row');
             if (loadingRow) loadingRow.remove();
             
@@ -710,7 +724,6 @@
             tbody.innerHTML = html;
         }
         
-        // Función para mostrar modal nuevo
         function mostrarModalNuevo() {
             document.getElementById('modalTitulo').textContent = 'Nuevo Profesor';
             document.getElementById('formProfesor').reset();
@@ -727,10 +740,9 @@
             }
         }
         
-        // Función para editar profesor
         async function editarProfesor(id) {
             try {
-                const response = await fetch(`/api/profesores/${id}`);
+                const response = await fetch(`/api/horarios/profesores/${id}`);
                 
                 if (!response.ok) {
                     const error = await response.json();
@@ -761,13 +773,11 @@
             }
         }
         
-        // Función para guardar profesor
         async function guardarProfesor() {
             const id = document.getElementById('profesorId').value;
             const method = id ? 'PUT' : 'POST';
-            const url = id ? `/api/profesores/${id}` : '/api/profesores';
+            const url = id ? `/api/horarios/profesores/${id}` : '/api/horarios/profesores';
             
-            // Validación
             const codigo = document.getElementById('codigo').value.trim();
             const nombres = document.getElementById('nombres').value.trim();
             const apellidos = document.getElementById('apellidos').value.trim();
@@ -800,13 +810,10 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    // Cerrar modal
                     if (modalInstance) {
                         modalInstance.hide();
                     }
-                    // Recargar tabla
                     await cargarProfesores();
-                    // Mostrar notificación de éxito
                     mostrarNotificacion('success', result.message || 'Profesor guardado exitosamente');
                 } else {
                     alert(`Error: ${result.error || 'Error desconocido'}`);
@@ -817,12 +824,11 @@
             }
         }
         
-        // Función para eliminar profesor
         async function eliminarProfesor(id) {
             if (!confirm('¿Está seguro de eliminar este profesor?\nEsta acción no se puede deshacer.')) return;
             
             try {
-                const response = await fetch(`/api/profesores/${id}`, {
+                const response = await fetch(`/api/horarios/profesores/${id}`, {
                     method: 'DELETE'
                 });
                 
@@ -840,7 +846,6 @@
             }
         }
         
-        // Función para mostrar notificaciones
         function mostrarNotificacion(tipo, mensaje) {
             const alert = document.createElement('div');
             alert.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
@@ -862,39 +867,25 @@
             }, 3000);
         }
         
-        // Función para logout
-        async function logout() {
-            try {
-                const response = await fetch('/logout');
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.href = '/';
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarNotificacion('error', 'Error al cerrar sesión');
-            }
-        }
-        
-        // Inicialización
+        // ═══════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', function() {
+            if (!requireAuth()) return;
+            
             cargarProfesores();
             
-            // Configurar modal
             const modalElement = document.getElementById('modalProfesor');
             modalElement.addEventListener('hidden.bs.modal', function () {
                 document.getElementById('formProfesor').reset();
             });
             
-            // Prevenir envío del formulario con Enter
             document.getElementById('formProfesor').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && e.target.type !== 'textarea') {
                     e.preventDefault();
                 }
             });
             
-            // Añadir clase fade-in a elementos dinámicos
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'childList') {

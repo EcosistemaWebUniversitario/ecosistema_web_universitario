@@ -279,7 +279,6 @@
             white-space: nowrap;
         }
         
-        /* Columna Año: ancho fijo para que no se aplaste con nombres largos */
         #tablaAsignaturas td:nth-child(3),
         .table-custom thead th:nth-child(3) {
             width: 90px;
@@ -293,7 +292,6 @@
             min-width: 110px;
             text-align: center;
         }
-        
         
         .badge-semester {
             background: rgba(114, 9, 183, 0.25);
@@ -317,7 +315,6 @@
             border: 1px solid rgba(76, 201, 240, 0.3);
         }
         
-        /* Textos y espaciado */
         .text-muted {
             color: var(--text-gray) !important;
         }
@@ -331,12 +328,10 @@
             color: var(--accent);
         }
         
-        /* Spinner */
         .spinner-border.text-primary {
             color: var(--primary) !important;
         }
         
-        /* Animaciones */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -346,7 +341,6 @@
             animation: fadeIn 0.5s ease forwards;
         }
         
-        /* Input de color personalizado */
         input[type="color"] {
             width: 60px;
             height: 40px;
@@ -361,7 +355,6 @@
             transform: scale(1.05);
         }
         
-        /* Responsive */
         @media (max-width: 768px) {
             .table-responsive {
                 border-radius: 10px;
@@ -387,7 +380,6 @@
             }
         }
         
-        /* Scrollbar personalizado */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -411,7 +403,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/dashboard">
+            <a class="navbar-brand" href="/horarios/dashboard">
                 <i class="fas fa-brain-circuit me-2"></i> HORARIOS
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -420,19 +412,19 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                        <a class="nav-link" href="/horarios/dashboard">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/admin/asignaturas" aria-current="page">Asignaturas</a>
+                        <a class="nav-link active" href="/horarios/admin/asignaturas" aria-current="page">Asignaturas</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/profesores">Profesores</a>
+                        <a class="nav-link" href="/horarios/admin/profesores">Profesores</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/turnos">Turnos</a>
+                        <a class="nav-link" href="/horarios/admin/turnos">Turnos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/horarios">Horarios</a>
+                        <a class="nav-link" href="/horarios/admin/horarios">Horarios</a>
                     </li>
                     <li class="nav-item">
                         <button class="btn btn-logout ms-3" onclick="logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
@@ -603,13 +595,51 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ═══════════════════════════════════════════
+        // AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
+        // ═══════════════════════════════════════════
+        function getToken() {
+            return localStorage.getItem('token') ??
+                   localStorage.getItem('access_token') ??
+                   localStorage.getItem('authToken');
+        }
+
+        function requireAuth() {
+            if (!getToken()) {
+                window.location.href = '/auth';
+                return false;
+            }
+            return true;
+        }
+
+        // Interceptar fetch para enviar el token siempre
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            const token = getToken();
+            if (token) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            return originalFetch(url, options);
+        };
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('authToken');
+            window.location.href = '/auth';
+        }
+
+        // ═══════════════════════════════════════════
+        // LÓGICA DE ASIGNATURAS
+        // ═══════════════════════════════════════════
         let asignaturas = [];
         let profesores = [];
         let modalInstance = null;
         
         async function cargarProfesores() {
             try {
-                const response = await fetch('/api/profesores/activos');
+                const response = await fetch('/api/horarios/profesores/activos');
                 if (response.ok) {
                     profesores = await response.json();
                     actualizarSelectProfesores();
@@ -636,7 +666,7 @@
         
         async function cargarAsignaturas() {
             try {
-                const response = await fetch('/api/asignaturas');
+                const response = await fetch('/api/horarios/asignaturas');
                 if (response.ok) {
                     asignaturas = await response.json();
                     renderizarTabla();
@@ -728,7 +758,7 @@
             console.log(`Editando asignatura ID: ${id}`);
             
             try {
-                const response = await fetch(`/api/asignaturas/${id}`);
+                const response = await fetch(`/api/horarios/asignaturas/${id}`);
                 
                 if (!response.ok) {
                     const error = await response.json();
@@ -767,9 +797,8 @@
         async function guardarAsignatura() {
             const id = document.getElementById('asignaturaId').value;
             const method = id ? 'PUT' : 'POST';
-            const url = id ? `/api/asignaturas/${id}` : '/api/asignaturas';
+            const url = id ? `/api/horarios/asignaturas/${id}` : '/api/horarios/asignaturas';
             
-            // Validación básica
             const codigo = document.getElementById('codigo').value.trim();
             const nombre = document.getElementById('nombre').value.trim();
             const año_academico = document.getElementById('año_academico').value;
@@ -809,7 +838,6 @@
                 console.log('Respuesta del servidor:', result);
                 
                 if (response.ok) {
-                    // Cerrar modal y recargar
                     if (modalInstance) {
                         modalInstance.hide();
                     }
@@ -828,7 +856,7 @@
             if (!confirm('¿Está seguro de eliminar esta asignatura?\nEsta acción no se puede deshacer.')) return;
             
             try {
-                const response = await fetch(`/api/asignaturas/${id}`, {
+                const response = await fetch(`/api/horarios/asignaturas/${id}`, {
                     method: 'DELETE'
                 });
                 
@@ -846,20 +874,6 @@
             }
         }
         
-        async function logout() {
-            try {
-                const response = await fetch('/logout');
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.href = '/';
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarError('Error al cerrar sesión');
-            }
-        }
-        
         function mostrarError(mensaje) {
             alert('Error: ' + mensaje);
         }
@@ -868,26 +882,27 @@
             alert('Éxito: ' + mensaje);
         }
         
-        // Inicializar
+        // ═══════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', function() {
+            if (!requireAuth()) return;
+            
             cargarAsignaturas();
             cargarProfesores();
             
-            // Configurar Bootstrap modal
             const modalElement = document.getElementById('modalAsignatura');
             modalElement.addEventListener('hidden.bs.modal', function () {
                 document.getElementById('formAsignatura').reset();
                 actualizarSelectProfesores();
             });
             
-            // Prevenir envío del formulario con Enter
             document.getElementById('formAsignatura').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && e.target.type !== 'textarea') {
                     e.preventDefault();
                 }
             });
             
-            // Efecto de aparición gradual
             setTimeout(() => {
                 document.body.style.opacity = '1';
                 document.body.style.transition = 'opacity 0.5s ease';
@@ -895,4 +910,4 @@
         });
     </script>
 </body>
-</html>
+</html>     

@@ -56,17 +56,28 @@ export const me = async (req: Request, res: Response) => {
       .eq('id', user.id)
       .single();
 
-    if (error) {
+    if (error || !profile) {
       return res.status(404).json({
         ok: false,
         message: 'Profile not found'
       });
     }
 
+    // 🔍 Obtener el nombre del rol desde la tabla roles
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from('roles')
+      .select('name')
+      .eq('id', profile.role_id)
+      .single();
+
+    const roleName = roleError || !roleData ? null : roleData.name;
+
     return res.status(200).json({
       ok: true,
       user,
-      profile
+      profile,
+      role: roleName,               // ← Agregamos el rol
+      permissions: []                // ← Permisos vacíos por ahora
     });
   } catch (error: any) {
     console.error('ME ERROR:', error);

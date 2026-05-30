@@ -1,70 +1,60 @@
 // src/server.js
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+const path = require('path');
+const fs = require('fs');
 
-const express   = require('express');
-const session   = require('express-session');
-const FileStore = require('session-file-store')(session);
-const cors      = require('cors');
-const path      = require('path');
-const fs        = require('fs');
-
-if (!process.env.SECRET_KEY) {
-  console.error('\n[ERROR] SECRET_KEY no está definida en el .env\n');
-  process.exit(1);
-}
-
-const sessionsDir = path.resolve(__dirname, '../sessions');
-['uploads/excel', 'uploads/pdf', sessionsDir].forEach(d => {
-  fs.mkdirSync(path.resolve(__dirname, '..', d), { recursive: true });
+// Carga condicional de variables de entorno según NODE_ENV
+require('dotenv').config({ 
+  path: process.env.NODE_ENV === 'development' 
+    ? path.resolve(__dirname, '../.env.local') 
+    : path.resolve(__dirname, '../.env') 
 });
+
+const express = require('express');
+const cors = require('cors');
 
 const app = express();
 
+// Middlewares básicos
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(session({
-  store: new FileStore({
-    path: sessionsDir,
-    ttl: parseInt(process.env.SESSION_MAX_AGE || '7200000') / 1000,
-    reapInterval: 3600,
-  }),
-  secret: process.env.SECRET_KEY,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: parseInt(process.env.SESSION_MAX_AGE || '7200000'),
-    httpOnly: true,
-    secure: false,
-    sameSite: 'lax',
-  },
-}));
-
+// Servir archivos estáticos del frontend (HTML, CSS, JS)
 const FRONTEND = path.resolve(__dirname, '../frontend');
 app.use(express.static(FRONTEND));
 
+// Servir sonidos si existen
 const SOUNDS = path.resolve(__dirname, '../sounds');
-if (fs.existsSync(SOUNDS)) app.use('/sounds', express.static(SOUNDS));
+if (fs.existsSync(SOUNDS)) {
+  app.use('/sounds', express.static(SOUNDS));
+}
 
-// Rutas
+// Rutas de autenticación (redirigen al auth-service central)
 app.use(require('./routes/auth'));
-app.use(require('./routes/profesores'));
-app.use(require('./routes/asignaturas'));
-app.use(require('./routes/turnos'));
-app.use(require('./routes/horarios'));
-app.use(require('./routes/usuario'));
-app.use(require('./routes/admin'));
 
-// Fallback
+// Rutas de la API de horarios (protegidas con JWT y bajo el prefijo /api/horarios)
+// Rutas de la API de horarios (cada módulo con su prefijo específico)
+app.use('/api/horarios/profesores', require('./routes/profesores'));
+app.use('/api/horarios/asignaturas', require('./routes/asignaturas'));
+app.use('/api/horarios/turnos', require('./routes/turnos'));
+app.use('/api/horarios/horarios', require('./routes/horarios'));
+app.use('/api/horarios', require('./routes/usuario'));       // tiene rutas variadas: /horarios-disponibles, /estadisticas, /calendario-semanal, etc.
+app.use('/api/horarios', require('./routes/admin'));         // /usuarios, etc.
+
+// Fallback para SPA o página principal
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Endpoint no encontrado' });
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Endpoint no encontrado' });
+  }
   res.sendFile(path.join(FRONTEND, 'index.html'));
 });
 
+// Manejo de errores
 app.use((err, req, res, _next) => {
   console.error('[ERROR]', err.message);
-  if (req.path.startsWith('/api/')) return res.status(500).json({ error: 'Error interno del servidor' });
+  if (req.path.startsWith('/api/')) {
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
   res.status(500).send('Error interno del servidor');
 });
 
@@ -73,10 +63,11 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 app.listen(PORT, HOST, () => {
   console.log('='.repeat(52));
-  console.log('   SISTEMA DE HORARIOS — Node.js + Supabase Auth');
+  console.log('   SISTEMA DE HORARIOS — Node.js + Supabase Auth (JWT)');
   console.log('='.repeat(52));
   console.log(`🌐 http://localhost:${PORT}`);
   console.log(`🗄️  ${process.env.SUPABASE_URL}`);
+  console.log(`🔑 Entorno: ${process.env.NODE_ENV || 'producción'}`);
   console.log('='.repeat(52));
 });
 

@@ -3,7 +3,7 @@ const express = require('express');
 const router  = express.Router();
 const ExcelJS = require('exceljs');
 const { supabase } = require('../db/supabase');
-const { loginRequired } = require('../middleware/auth');
+const { loginRequired, adminRequired } = require('../middleware/auth');
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
@@ -49,8 +49,8 @@ async function getSlots(horarioId) {
   }));
 }
 
-// ── GET /api/horarios ─────────────────────────────────────────────────────────
-router.get('/api/horarios', loginRequired, async (req, res) => {
+// ── GET / ────────────────────────────────────────────────────────────────────
+router.get('/', loginRequired, async (req, res) => {
   try {
     const { data, error } = await supabase.from('horario_general').select('*').order('año_carrera').order('semestre').order('creado_en', { ascending: false });
     if (error) throw error;
@@ -58,8 +58,8 @@ router.get('/api/horarios', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── GET /api/horarios/:id ─────────────────────────────────────────────────────
-router.get('/api/horarios/:id', loginRequired, async (req, res) => {
+// ── GET /:id ─────────────────────────────────────────────────────────────────
+router.get('/:id', loginRequired, async (req, res) => {
   try {
     const { data: h, error: he } = await supabase.from('horario_general').select('*').eq('id', req.params.id).single();
     if (he || !h) return res.status(404).json({ error: 'Horario no encontrado' });
@@ -85,9 +85,8 @@ router.get('/api/horarios/:id', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── POST /api/horarios ────────────────────────────────────────────────────────
-router.post('/api/horarios', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// ── POST / ────────────────────────────────────────────────────────────────────
+router.post('/', loginRequired, adminRequired, async (req, res) => {
   const d = req.body;
   if (!['titulo','año_academico','semestre','año_carrera','fecha_inicio','fecha_fin'].every(f => d[f] !== undefined))
     return res.status(400).json({ error: 'Faltan campos requeridos' });
@@ -103,13 +102,13 @@ router.post('/api/horarios', loginRequired, async (req, res) => {
       año_carrera: d.año_carrera, carrera: d.carrera || 'INGENIERÍA INFORMÁTICA',
       modalidad: d.modalidad || 'Diurno', semanas_totales, semanas_clases,
       semanas_examenes, fecha_inicio: d.fecha_inicio, fecha_fin: d.fecha_fin,
-      creado_por: req.session.userId
+      creado_por: req.user.id   // ← ahora usamos el perfil autenticado (JWT)
     }).select().single();
     if (he) throw he;
 
     const { data: turnos } = await supabase.from('turno').select('id').eq('activo', true).order('seccion').order('orden');
 
-    // Crear slots en lotes de 500 (límite de Supabase)
+    // Crear slots en lotes de 500
     const slots = [];
     for (let semana = 1; semana <= semanas_totales; semana++) {
       const es_examen = semana > (semanas_totales - semanas_examenes);
@@ -122,7 +121,6 @@ router.post('/api/horarios', loginRequired, async (req, res) => {
       }
     }
 
-    // Insertar en lotes de 500
     for (let i = 0; i < slots.length; i += 500) {
       const { error } = await supabase.from('horario_semanal').insert(slots.slice(i, i + 500));
       if (error) throw error;
@@ -132,9 +130,8 @@ router.post('/api/horarios', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── POST /api/horarios/:id/asignar ────────────────────────────────────────────
-router.post('/api/horarios/:id/asignar', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// ── POST /:id/asignar ────────────────────────────────────────────────────────
+router.post('/:id/asignar', loginRequired, adminRequired, async (req, res) => {
   const { semana_numero, dia_semana, turno_id, asignatura_id } = req.body;
   if (semana_numero === undefined || dia_semana === undefined || turno_id === undefined || asignatura_id === undefined)
     return res.status(400).json({ error: 'Faltan campos requeridos' });
@@ -145,7 +142,6 @@ router.post('/api/horarios/:id/asignar', loginRequired, async (req, res) => {
       .eq('dia_semana', dia_semana).eq('turno_id', turno_id).single();
     if (!slot) return res.status(404).json({ error: 'Slot no encontrado' });
 
-    // Limpiar slot
     if (asignatura_id === null) {
       await supabase.from('horario_semanal').update({ asignatura_id: null, profesor_id: null, color: null }).eq('id', slot.id);
       return res.json({ success: true, slot: { ...slot, asignatura_id: null, profesor_id: null, color: null } });
@@ -154,7 +150,6 @@ router.post('/api/horarios/:id/asignar', loginRequired, async (req, res) => {
     const { data: asig } = await supabase.from('asignatura').select('*, profesor(nombres,apellidos)').eq('id', asignatura_id).single();
     if (!asig) return res.status(404).json({ error: 'Asignatura no encontrada' });
 
-    // Validar conflicto de profesor
     if (asig.profesor_id) {
       const { data: conflicto } = await supabase.from('horario_semanal').select('id, asignatura(nombre)')
         .eq('horario_general_id', req.params.id).eq('semana_numero', semana_numero)
@@ -164,7 +159,6 @@ router.post('/api/horarios/:id/asignar', loginRequired, async (req, res) => {
         message: `El profesor ya tiene clase en este turno` });
     }
 
-    // Validar límite horas
     if (asig.horas_presenciales > 0) {
       const { count } = await supabase.from('horario_semanal').select('id', { count: 'exact', head: true })
         .eq('horario_general_id', req.params.id).eq('semana_numero', semana_numero).eq('asignatura_id', asignatura_id);
@@ -173,7 +167,6 @@ router.post('/api/horarios/:id/asignar', loginRequired, async (req, res) => {
         message: `Máximo ${maxTurnos} turnos esta semana para esta asignatura` });
     }
 
-    // Validar año/semestre
     const { data: horario } = await supabase.from('horario_general').select('año_carrera,semestre').eq('id', req.params.id).single();
     if (asig.año_academico !== horario.año_carrera || asig.periodo !== horario.semestre)
       return res.status(400).json({ error: 'Asignatura no corresponde al horario' });
@@ -188,9 +181,8 @@ router.post('/api/horarios/:id/asignar', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── POST /api/horarios/:id/limpiar-slot ───────────────────────────────────────
-router.post('/api/horarios/:id/limpiar-slot', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// ── POST /:id/limpiar-slot ──────────────────────────────────────────────────
+router.post('/:id/limpiar-slot', loginRequired, adminRequired, async (req, res) => {
   const { semana_numero, dia_semana, turno_id } = req.body;
   try {
     const { error } = await supabase.from('horario_semanal')
@@ -202,9 +194,8 @@ router.post('/api/horarios/:id/limpiar-slot', loginRequired, async (req, res) =>
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── POST /api/horarios/:id/limpiar-todo ───────────────────────────────────────
-router.post('/api/horarios/:id/limpiar-todo', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// ── POST /:id/limpiar-todo ──────────────────────────────────────────────────
+router.post('/:id/limpiar-todo', loginRequired, adminRequired, async (req, res) => {
   try {
     const { error } = await supabase.from('horario_semanal')
       .update({ asignatura_id: null, profesor_id: null, color: null })
@@ -214,9 +205,8 @@ router.post('/api/horarios/:id/limpiar-todo', loginRequired, async (req, res) =>
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── POST /api/horarios/:id/generar-automatico ─────────────────────────────────
-router.post('/api/horarios/:id/generar-automatico', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// ── POST /:id/generar-automatico ─────────────────────────────────────────────
+router.post('/:id/generar-automatico', loginRequired, adminRequired, async (req, res) => {
   try {
     const { data: horario } = await supabase.from('horario_general').select('*').eq('id', req.params.id).single();
     if (!horario) return res.status(404).json({ error: 'Horario no encontrado' });
@@ -230,7 +220,6 @@ router.post('/api/horarios/:id/generar-automatico', loginRequired, async (req, r
 
     const semanas_clases = horario.semanas_totales - horario.semanas_examenes;
 
-    // Limpiar slots mañana Lun-Jue de semanas de clase
     await supabase.from('horario_semanal')
       .update({ asignatura_id: null, profesor_id: null, color: null })
       .eq('horario_general_id', horario.id)
@@ -238,7 +227,6 @@ router.post('/api/horarios/:id/generar-automatico', loginRequired, async (req, r
       .lte('semana_numero', semanas_clases)
       .in('turno_id', turnosMañana.map(t => t.id));
 
-    // Traer todos los slots disponibles
     const { data: slotsDisponibles } = await supabase.from('horario_semanal').select('id,semana_numero,dia_semana,turno_id,asignatura_id,es_examen')
       .eq('horario_general_id', horario.id)
       .in('dia_semana', [0, 1, 2, 3])
@@ -255,10 +243,9 @@ router.post('/api/horarios/:id/generar-automatico', loginRequired, async (req, r
     })).sort((a, b) => b.horas - a.horas);
 
     const profOcupado = new Map();
-    const semanaAsig  = new Map(); // "asig_id-semana" -> count
+    const semanaAsig  = new Map();
     const updates = [];
 
-    // Mezclar slots aleatoriamente
     const slots = [...slotsDisponibles].sort(() => Math.random() - 0.5);
 
     for (const asig of asigInfo) {
@@ -267,12 +254,10 @@ router.post('/api/horarios/:id/generar-automatico', loginRequired, async (req, r
         if (faltantes <= 0) break;
         if (slot._usado) continue;
 
-        // Verificar conflicto de profesor
         if (asig.prof_id) {
           const k = `${asig.prof_id}-${slot.semana_numero}-${slot.dia_semana}-${slot.turno_id}`;
           if (profOcupado.has(k)) continue;
         }
-        // Max 2 por semana
         const sk = `${asig.id}-${slot.semana_numero}`;
         if ((semanaAsig.get(sk) || 0) >= 2) continue;
 
@@ -285,7 +270,6 @@ router.post('/api/horarios/:id/generar-automatico', loginRequired, async (req, r
       }
     }
 
-    // Aplicar updates en lotes
     for (let i = 0; i < updates.length; i += 100) {
       const lote = updates.slice(i, i + 100);
       for (const u of lote) {
@@ -300,8 +284,8 @@ router.post('/api/horarios/:id/generar-automatico', loginRequired, async (req, r
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── GET /api/horarios/:id/estadisticas ────────────────────────────────────────
-router.get('/api/horarios/:id/estadisticas', loginRequired, async (req, res) => {
+// ── GET /:id/estadisticas ────────────────────────────────────────────────────
+router.get('/:id/estadisticas', loginRequired, async (req, res) => {
   try {
     const { count: total } = await supabase.from('horario_semanal').select('id', { count: 'exact', head: true }).eq('horario_general_id', req.params.id);
     const { count: ocupados } = await supabase.from('horario_semanal').select('id', { count: 'exact', head: true }).eq('horario_general_id', req.params.id).not('asignatura_id', 'is', null);
@@ -310,9 +294,8 @@ router.get('/api/horarios/:id/estadisticas', loginRequired, async (req, res) => 
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── GET /api/horarios/:id/exportar-excel ──────────────────────────────────────
-router.get('/api/horarios/:id/exportar-excel', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// ── GET /:id/exportar-excel ──────────────────────────────────────────────────
+router.get('/:id/exportar-excel', loginRequired, adminRequired, async (req, res) => {
   try {
     const { data: h } = await supabase.from('horario_general').select('*').eq('id', req.params.id).single();
     if (!h) return res.status(404).json({ error: 'Horario no encontrado' });
@@ -347,8 +330,8 @@ router.get('/api/horarios/:id/exportar-excel', loginRequired, async (req, res) =
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── GET /api/horarios/:id/vista-semestral-detallada ───────────────────────────
-router.get('/api/horarios/:id/vista-semestral-detallada', loginRequired, async (req, res) => {
+// ── GET /:id/vista-semestral-detallada ───────────────────────────────────────
+router.get('/:id/vista-semestral-detallada', loginRequired, async (req, res) => {
   try {
     const { data: h } = await supabase.from('horario_general').select('*').eq('id', req.params.id).single();
     if (!h) return res.status(404).json({ error: 'Horario no encontrado' });
@@ -387,9 +370,8 @@ router.get('/api/horarios/:id/vista-semestral-detallada', loginRequired, async (
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── POST /api/horarios/:id/actualizar-fecha-semana ────────────────────────────
-router.post('/api/horarios/:id/actualizar-fecha-semana', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// ── POST /:id/actualizar-fecha-semana ────────────────────────────────────────
+router.post('/:id/actualizar-fecha-semana', loginRequired, adminRequired, async (req, res) => {
   const { semana_numero, fecha_inicio } = req.body;
   if (!semana_numero || !fecha_inicio) return res.status(400).json({ error: 'Faltan campos' });
   try {
@@ -402,11 +384,9 @@ router.post('/api/horarios/:id/actualizar-fecha-semana', loginRequired, async (r
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── DELETE /api/horarios/:id ──────────────────────────────────────────────────
-router.delete('/api/horarios/:id', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// ── DELETE /:id ──────────────────────────────────────────────────────────────
+router.delete('/:id', loginRequired, adminRequired, async (req, res) => {
   try {
-    // ON DELETE CASCADE elimina horario_semanal automáticamente
     const { error } = await supabase.from('horario_general').delete().eq('id', req.params.id);
     if (error) throw error;
     res.json({ success: true, message: 'Horario eliminado' });

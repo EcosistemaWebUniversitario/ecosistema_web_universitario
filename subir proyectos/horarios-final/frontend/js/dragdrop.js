@@ -1,3 +1,40 @@
+// ═══════════════════════════════════════════
+// AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
+// ═══════════════════════════════════════════
+function getToken() {
+    return localStorage.getItem('token') ??
+           localStorage.getItem('access_token') ??
+           localStorage.getItem('authToken');
+}
+
+function requireAuth() {
+    if (!getToken()) {
+        window.location.href = '/auth';
+        return false;
+    }
+    return true;
+}
+
+const originalFetch = window.fetch;
+window.fetch = function(url, options = {}) {
+    const token = getToken();
+    if (token) {
+        options.headers = options.headers || {};
+        options.headers['Authorization'] = 'Bearer ' + token;
+    }
+    return originalFetch(url, options);
+};
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('authToken');
+    window.location.href = '/auth';
+}
+
+// ═══════════════════════════════════════════
+// CLASE PRINCIPAL DE DRAG & DROP
+// ═══════════════════════════════════════════
 class HorarioDragDrop {
     constructor(containerId, horarioId) {
         this.container = document.getElementById(containerId);
@@ -11,6 +48,7 @@ class HorarioDragDrop {
     }
     
     async init() {
+        if (!requireAuth()) return;
         await this.cargarDatos();
         this.renderizarCalendario();
         this.configurarDragDrop();
@@ -19,17 +57,17 @@ class HorarioDragDrop {
     async cargarDatos() {
         try {
             // Cargar asignaturas
-            const asignaturasRes = await fetch('/api/asignaturas');
+            const asignaturasRes = await fetch('/api/horarios/asignaturas');
             this.asignaturas = await asignaturasRes.json();
             
             // Cargar horario
-            const horarioRes = await fetch(`/api/horario/${this.horarioId}`);
+            const horarioRes = await fetch(`/api/horarios/horarios/${this.horarioId}`);
             const data = await horarioRes.json();
             this.horario = data.horario;
             this.semanas = data.semanas;
             
             // Cargar turnos
-            const turnosRes = await fetch('/api/turnos');
+            const turnosRes = await fetch('/api/horarios/turnos');
             this.turnos = await turnosRes.json();
             
         } catch (error) {
@@ -122,7 +160,6 @@ class HorarioDragDrop {
         calendario.className = 'calendario-horario';
         calendario.id = 'calendario-horario';
         
-        // Filtrar solo semanas de clases para el calendario
         const semanasClases = Array.from(
             {length: this.horario.semanas_clases}, 
             (_, i) => i + 1
@@ -144,13 +181,12 @@ class HorarioDragDrop {
         const header = document.createElement('div');
         header.className = 'semana-header';
         
-        // Calcular fechas
         const fechaInicio = new Date(this.horario.fecha_inicio);
         const inicioSemana = new Date(fechaInicio);
         inicioSemana.setDate(fechaInicio.getDate() + (semana - 1) * 7);
         
         const finSemana = new Date(inicioSemana);
-        finSemana.setDate(inicioSemana.getDate() + 4); // Solo lunes-viernes
+        finSemana.setDate(inicioSemana.getDate() + 4);
         
         header.innerHTML = `
             <h4>Semana ${semana}</h4>
@@ -159,7 +195,6 @@ class HorarioDragDrop {
         
         semanaElement.appendChild(header);
         
-        // Crear días de la semana
         const diasGrid = document.createElement('div');
         diasGrid.className = 'dias-grid';
         
@@ -184,7 +219,6 @@ class HorarioDragDrop {
         header.innerHTML = `<h5>${diaNombre}</h5>`;
         diaElement.appendChild(header);
         
-        // Crear turnos
         const turnosContainer = document.createElement('div');
         turnosContainer.className = 'turnos-container';
         
@@ -205,7 +239,6 @@ class HorarioDragDrop {
         turnoElement.dataset.dia = dia;
         turnoElement.dataset.turno = turno.id;
         
-        // Verificar si hay asignatura en este turno
         const asignatura = this.obtenerAsignatura(semana, dia, turno.id);
         
         if (asignatura) {
@@ -255,7 +288,6 @@ class HorarioDragDrop {
         const panel = document.createElement('div');
         panel.className = 'panel-asignaturas';
         
-        // Agrupar asignaturas por año
         const asignaturasPorAño = {};
         this.asignaturas.forEach(asig => {
             if (!asignaturasPorAño[asig.año]) {
@@ -324,13 +356,11 @@ class HorarioDragDrop {
     }
     
     configurarDragDrop() {
-        // Configurar elementos draggables (asignaturas)
         const draggables = document.querySelectorAll('.asignatura-draggable');
         draggables.forEach(draggable => {
             draggable.addEventListener('dragstart', this.handleDragStart.bind(this));
         });
         
-        // Configurar drop targets (turnos)
         const dropTargets = document.querySelectorAll('.turno-slot');
         dropTargets.forEach(target => {
             target.addEventListener('dragover', this.handleDragOver.bind(this));
@@ -374,9 +404,8 @@ class HorarioDragDrop {
         
         if (!asignaturaId || !semana || !dia || !turno) return;
         
-        // Enviar al servidor
         try {
-            const response = await fetch(`/api/horario/${this.horarioId}/asignar`, {
+            const response = await fetch(`/api/horarios/horarios/${this.horarioId}/asignar`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -392,17 +421,14 @@ class HorarioDragDrop {
             const result = await response.json();
             
             if (result.success) {
-                // Actualizar vista
                 this.actualizarTurno(semana, dia, turno, asignaturaId);
                 
-                // Mostrar conflictos si los hay
                 if (result.conflictos && result.conflictos.length > 0) {
                     this.mostrarConflictos(result.conflictos);
                 } else {
                     this.ocultarConflictos();
                 }
                 
-                // Mostrar notificación
                 this.mostrarNotificacion('Asignatura asignada correctamente', 'success');
             }
             
@@ -428,7 +454,6 @@ class HorarioDragDrop {
         );
         
         if (turnoElement && asignatura) {
-            // Actualizar vista del turno
             const turnoData = this.turnos.find(t => t.id == turno);
             turnoElement.className = 'turno-slot turno-asignatura';
             turnoElement.style.backgroundColor = asignatura.color + '20';
@@ -450,7 +475,6 @@ class HorarioDragDrop {
                 </div>
             `;
             
-            // Actualizar datos en memoria
             if (!this.semanas[semana]) this.semanas[semana] = {};
             if (!this.semanas[semana][dia]) this.semanas[semana][dia] = {};
             
@@ -499,8 +523,6 @@ class HorarioDragDrop {
         });
         
         panelBody.innerHTML = conflictosHTML;
-        
-        // Mostrar panel si está oculto
         document.querySelector('.panel-conflictos').style.display = 'block';
     }
     
@@ -537,10 +559,12 @@ class HorarioDragDrop {
     }
 }
 
-// Funciones globales
+// ═══════════════════════════════════════════
+// FUNCIONES GLOBALES
+// ═══════════════════════════════════════════
 async function removerAsignatura(semana, dia, turno) {
     try {
-        const response = await fetch(`/api/horario/${window.horarioId}/asignar`, {
+        const response = await fetch(`/api/horarios/horarios/${window.horarioId}/asignar`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -549,14 +573,12 @@ async function removerAsignatura(semana, dia, turno) {
                 semana: semana,
                 dia: dia,
                 turno: turno
-                // Sin asignatura_id para eliminar
             })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            // Recargar vista
             window.horarioDD.actualizarTurnoVacio(semana, dia, turno);
             
             if (result.conflictos && result.conflictos.length > 0) {
@@ -575,25 +597,22 @@ async function removerAsignatura(semana, dia, turno) {
 }
 
 async function guardarHorario() {
-    // Implementar guardado completo del horario
     window.horarioDD.mostrarNotificacion('Horario guardado correctamente', 'success');
 }
 
 async function generarDistribucionAutomatica() {
-    // Implementar distribución automática
     window.horarioDD.mostrarNotificacion('Distribuyendo automáticamente...', 'info');
 }
 
 async function limpiarHorario() {
     if (confirm('¿Estás seguro de que quieres limpiar todo el horario?')) {
-        // Implementar limpieza
         window.horarioDD.mostrarNotificacion('Horario limpiado', 'info');
     }
 }
 
 async function exportarExcel() {
     try {
-        const response = await fetch(`/api/exportar_excel/${window.horarioId}`);
+        const response = await fetch(`/api/horarios/horarios/${window.horarioId}/exportar-excel`);
         const blob = await response.blob();
         
         const url = window.URL.createObjectURL(blob);
@@ -618,9 +637,12 @@ function mostrarSemana(semana) {
     }
 }
 
-// Inicializar cuando el DOM esté listo
+// ═══════════════════════════════════════════
+// INICIALIZACIÓN
+// ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar drag & drop si estamos en la página de horarios
+    if (!requireAuth()) return;
+    
     if (document.getElementById('calendario-container') && window.horarioId) {
         window.horarioDD = new HorarioDragDrop('calendario-container', window.horarioId);
     }

@@ -2,10 +2,10 @@
 const express = require('express');
 const router  = express.Router();
 const { supabase } = require('../db/supabase');
-const { loginRequired } = require('../middleware/auth');
+const { loginRequired, adminRequired } = require('../middleware/auth');
 
-// GET /api/asignaturas
-router.get('/api/asignaturas', loginRequired, async (req, res) => {
+// GET /asignaturas
+router.get('/', loginRequired, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('asignatura')
@@ -20,8 +20,8 @@ router.get('/api/asignaturas', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/asignaturas/:id
-router.get('/api/asignaturas/:id', loginRequired, async (req, res) => {
+// GET /asignaturas/:id
+router.get('/:id', loginRequired, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('asignatura')
@@ -37,9 +37,8 @@ router.get('/api/asignaturas/:id', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/asignaturas
-router.post('/api/asignaturas', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// POST /asignaturas
+router.post('/', loginRequired, adminRequired, async (req, res) => {
   const { codigo, nombre, descripcion, año_academico, periodo,
     horas_presenciales = 0, horas_no_presenciales = 0, horas_totales = 0,
     tipo_evaluacion = 'EF', color = '#3498db', profesor_id = null } = req.body;
@@ -61,9 +60,8 @@ router.post('/api/asignaturas', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT /api/asignaturas/:id
-router.put('/api/asignaturas/:id', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// PUT /asignaturas/:id
+router.put('/:id', loginRequired, adminRequired, async (req, res) => {
   try {
     const updates = {};
     const fields = ['codigo','nombre','descripcion','año_academico','periodo',
@@ -76,9 +74,8 @@ router.put('/api/asignaturas/:id', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// DELETE /api/asignaturas/:id
-router.delete('/api/asignaturas/:id', loginRequired, async (req, res) => {
-  if (req.session.userRole !== 'admin_horarios') return res.status(403).json({ error: 'No autorizado' });
+// DELETE /asignaturas/:id
+router.delete('/:id', loginRequired, adminRequired, async (req, res) => {
   try {
     const { error } = await supabase.from('asignatura').delete().eq('id', req.params.id);
     if (error) throw error;

@@ -30,7 +30,6 @@
             min-height: 100vh;
         }
         
-        /* NAVBAR ESTILIZADA */
         .navbar-custom {
             background: rgba(26, 26, 46, 0.95);
             -webkit-backdrop-filter: blur(10px);
@@ -84,7 +83,6 @@
             box-shadow: 0 8px 20px rgba(247, 37, 133, 0.3);
         }
         
-        /* HEADER PRINCIPAL */
         .container-fluid {
             max-width: 1400px;
         }
@@ -101,7 +99,6 @@
             gap: 10px;
         }
         
-        /* BOTÓN PRINCIPAL */
         .btn-primary-custom {
             background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
             border: none;
@@ -121,7 +118,6 @@
             box-shadow: 0 10px 25px rgba(67, 97, 238, 0.4);
         }
         
-        /* TARJETAS PRINCIPALES */
         .card-custom {
             background: var(--color-card);
             -webkit-backdrop-filter: blur(20px);
@@ -143,7 +139,6 @@
             padding: 25px;
         }
         
-        /* ENCABEZADOS DE SECCIÓN */
         .section-header {
             color: var(--color-accent);
             border-bottom: 2px solid;
@@ -157,7 +152,6 @@
             font-size: 1.3rem;
         }
         
-        /* TARJETAS DE TURNOS */
         .turno-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--color-border);
@@ -199,7 +193,6 @@
             border-left: 4px solid var(--color-danger);
         }
         
-        /* DISPLAY DE TIEMPO */
         .time-display {
             font-family: 'Courier New', monospace;
             font-size: 1.2rem;
@@ -211,7 +204,6 @@
             display: inline-block;
         }
         
-        /* FORM CONTROLS */
         .form-control-custom {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--color-border);
@@ -235,7 +227,6 @@
             margin-bottom: 6px;
         }
         
-        /* BADGES */
         .badge-seccion {
             padding: 8px 16px;
             border-radius: 20px;
@@ -257,7 +248,6 @@
             border: 1px solid rgba(247, 37, 133, 0.3);
         }
         
-        /* INFO CARDS */
         .info-card {
             background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(58, 12, 163, 0.1) 100%);
             border: 1px solid rgba(67, 97, 238, 0.2);
@@ -304,7 +294,6 @@
             color: #8fa3ff;
         }
         
-        /* ALERTAS */
         .alert-info {
             background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(58, 12, 163, 0.1) 100%);
             border: 1px solid rgba(67, 97, 238, 0.3);
@@ -318,12 +307,10 @@
             color: var(--color-primary);
         }
         
-        /* SPINNER */
         .spinner-border.text-primary {
             color: var(--color-primary) !important;
         }
         
-        /* RESPONSIVE */
         @media (max-width: 768px) {
             .navbar-brand {
                 font-size: 1.2rem;
@@ -352,7 +339,6 @@
             }
         }
         
-        /* ANIMACIONES */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -368,7 +354,6 @@
             animation: fadeInUp 0.6s ease forwards;
         }
         
-        /* FOCUS PARA ACCESIBILIDAD */
         *:focus {
             outline: 2px solid var(--color-accent);
             outline-offset: 2px;
@@ -379,7 +364,7 @@
     <!-- NAVBAR MEJORADA -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/dashboard">
+            <a class="navbar-brand" href="/horarios/admin/dashboard">
                 <i class="fas fa-calendar-alt"></i> HORARIOS 2025
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -388,27 +373,27 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/dashboard">
+                        <a class="nav-link" href="/horarios/admin/dashboard">
                             <i class="fas fa-home me-1"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/asignaturas">
+                        <a class="nav-link" href="/horarios/admin/asignaturas">
                             <i class="fas fa-book me-1"></i> Asignaturas
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/profesores">
+                        <a class="nav-link" href="/horarios/admin/profesores">
                             <i class="fas fa-chalkboard-teacher me-1"></i> Profesores
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/admin/turnos" aria-current="page">
+                        <a class="nav-link active" href="/horarios/admin/turnos" aria-current="page">
                             <i class="fas fa-clock me-1"></i> Turnos
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin/horarios">
+                        <a class="nav-link" href="/horarios/admin/horarios">
                             <i class="fas fa-calendar-alt me-1"></i> Horarios
                         </a>
                     </li>
@@ -515,11 +500,48 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ═══════════════════════════════════════════
+        // AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
+        // ═══════════════════════════════════════════
+        function getToken() {
+            return localStorage.getItem('token') ??
+                   localStorage.getItem('access_token') ??
+                   localStorage.getItem('authToken');
+        }
+
+        function requireAuth() {
+            if (!getToken()) {
+                window.location.href = '/auth';
+                return false;
+            }
+            return true;
+        }
+
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            const token = getToken();
+            if (token) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            return originalFetch(url, options);
+        };
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('authToken');
+            window.location.href = '/auth';
+        }
+
+        // ═══════════════════════════════════════════
+        // LÓGICA DE CONFIGURACIÓN DE TURNOS
+        // ═══════════════════════════════════════════
         let turnos = [];
         
         async function cargarTurnos() {
             try {
-                const response = await fetch('/api/turnos');
+                const response = await fetch('/api/horarios/turnos');
                 if (response.ok) {
                     turnos = await response.json();
                     renderizarTurnos();
@@ -539,11 +561,9 @@
             mañanaContainer.innerHTML = '';
             tardeContainer.innerHTML = '';
             
-            // Filtrar turnos por sección
             const turnosMañana = turnos.filter(t => t.seccion === 'mañana').sort((a, b) => a.orden - b.orden);
             const turnosTarde = turnos.filter(t => t.seccion === 'tarde').sort((a, b) => a.orden - b.orden);
             
-            // Renderizar turnos de mañana
             turnosMañana.forEach(turno => {
                 const card = document.createElement('div');
                 card.className = `turno-card turno-mañana fade-in`;
@@ -594,7 +614,6 @@
                 mañanaContainer.appendChild(card);
             });
             
-            // Renderizar turnos de tarde
             turnosTarde.forEach(turno => {
                 const card = document.createElement('div');
                 card.className = `turno-card turno-tarde fade-in`;
@@ -680,7 +699,7 @@
             btn.disabled = true;
             
             try {
-                const response = await fetch('/api/turnos/actualizar-multiples', {
+                const response = await fetch('/api/horarios/turnos/actualizar-multiples', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -692,7 +711,7 @@
                 
                 if (response.ok) {
                     mostrarNotificacion('success', `${cambios.length} turnos actualizados exitosamente`);
-                    cargarTurnos(); // Recargar para mostrar cambios
+                    cargarTurnos();
                 } else {
                     mostrarNotificacion('error', `Error: ${result.error || 'Error al guardar los cambios'}`);
                 }
@@ -702,20 +721,6 @@
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
-            }
-        }
-        
-        async function logout() {
-            try {
-                const response = await fetch('/logout');
-                const data = await response.json();
-                
-                if (data.success) {
-                    window.location.href = '/';
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarNotificacion('error', 'Error al cerrar sesión');
             }
         }
         
@@ -753,10 +758,14 @@
             mostrarNotificacion('error', mensaje);
         }
         
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', cargarTurnos);
+        // ═══════════════════════════════════════════
+        // INICIALIZACIÓN
+        // ═══════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!requireAuth()) return;
+            cargarTurnos();
+        });
         
-        // Añadir animaciones de entrada
         document.addEventListener('DOMContentLoaded', () => {
             const elements = document.querySelectorAll('.fade-in');
             elements.forEach((el, index) => {
