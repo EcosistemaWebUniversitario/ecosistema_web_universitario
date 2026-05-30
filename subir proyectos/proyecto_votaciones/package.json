@@ -1,0 +1,20 @@
+{
+  "name": "votaciones-supabase",
+  "version": "1.0.0",
+  "description": "Sistema de Votaciones — Node.js + Supabase",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "@supabase/supabase-js": "^2.43.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

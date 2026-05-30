@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resultados de Votación</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/resultados.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Resultados de las Elecciones Estudiantiles</h1>
+      <div class="header-links">
+        <a href="index.html" class="btn-secondary">Inicio</a>
+        <button onclick="cargarResultados()" class="btn-primary">Actualizar</button>
+      </div>
+    </header>
+
+    <div class="tiempo-votacion">
+      <h3>Estado de la Votación:</h3>
+      <p id="estadoVotacion">Cargando...</p>
+      <p id="tiempoRestante"></p>
+    </div>
+
+    <div id="sinAcceso" style="display:none;" class="message info">
+      Los resultados solo están disponibles cuando la votación ha finalizado.
+    </div>
+
+    <div id="contenidoResultados">
+      <div class="resultados-section">
+        <h2>Miembros de la Organización (Top 7)</h2>
+        <div class="resultados-container" id="resultadosOrganizacion">Cargando...</div>
+      </div>
+      <div class="resultados-section">
+        <h2>Líder de la Organización</h2>
+        <div class="resultados-container" id="resultadosLider">Cargando...</div>
+      </div>
+      <div class="estadisticas">
+        <h2>Estadísticas</h2>
+        <div class="stats-grid">
+          <div class="stat-card"><h3>Total Votantes</h3><p id="totalVotantes">0</p></div>
+          <div class="stat-card"><h3>Votos Organización</h3><p id="votosOrganizacion">0</p></div>
+          <div class="stat-card"><h3>Votos Líder</h3><p id="votosLider">0</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await cargarEstado();
+      await cargarResultados();
+    });
+
+    async function cargarEstado() {
+      const estado = await API.estadoVotacion();
+      const el = document.getElementById('estadoVotacion');
+      if (estado.activa) {
+        el.textContent = '🟢 Votación en curso';
+        document.getElementById('tiempoRestante').textContent = estado.tiempo_restante || '';
+      } else if (estado.finalizada) {
+        el.textContent = '🔴 Votación finalizada';
+      } else {
+        el.textContent = '⏳ Votación no iniciada';
+      }
+    }
+
+    async function cargarResultados() {
+      const data = await API.resultados();
+      if (data.error) {
+        document.getElementById('contenidoResultados').style.display = 'none';
+        document.getElementById('sinAcceso').style.display = 'block';
+        return;
+      }
+
+      // Organización
+      const org = document.getElementById('resultadosOrganizacion');
+      org.innerHTML = (data.organizacion || []).slice(0, 7).map((c, i) => `
+        <div class="resultado-card ${i === 0 ? 'ganador' : ''}">
+          <span class="posicion">#${i + 1}</span>
+          <div class="info-candidato">
+            <strong>${c.nombre}</strong>
+            <span>${c.votos} votos</span>
+          </div>
+        </div>
+      `).join('') || '<p>Sin resultados</p>';
+
+      // Líder
+      const lider = document.getElementById('resultadosLider');
+      lider.innerHTML = (data.lider || []).slice(0, 3).map((c, i) => `
+        <div class="resultado-card ${i === 0 ? 'ganador' : ''}">
+          <span class="posicion">#${i + 1}</span>
+          <div class="info-candidato">
+            <strong>${c.nombre}</strong>
+            <span>${c.votos} votos</span>
+          </div>
+        </div>
+      `).join('') || '<p>Sin resultados</p>';
+
+      // Stats
+      document.getElementById('totalVotantes').textContent = data.estadisticas?.total_votantes || 0;
+      document.getElementById('votosOrganizacion').textContent =
+        (data.organizacion || []).reduce((s, c) => s + c.votos, 0);
+      document.getElementById('votosLider').textContent =
+        (data.lider || []).reduce((s, c) => s + c.votos, 0);
+    }
+  </script>
+</body>
+</html>

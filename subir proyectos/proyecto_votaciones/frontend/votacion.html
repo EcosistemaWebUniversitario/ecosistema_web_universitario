@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votación Estudiantil</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/votacion.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Elecciones Estudiantiles</h1>
+      <div class="user-info">
+        <span id="userName"></span>
+        <button onclick="cerrarSesion()" class="btn-secondary">Cerrar Sesión</button>
+      </div>
+    </header>
+
+    <div class="votacion-container">
+      <!-- Paso 1: Organización -->
+      <div class="paso" id="paso1">
+        <h2>Votación para Miembros de la Organización</h2>
+        <p class="instrucciones">Selecciona <strong>hasta 7 candidatos</strong> para formar parte de la organización estudiantil.</p>
+        <div class="candidatos-grid" id="candidatosOrganizacion"></div>
+        <div class="contador"><span id="contadorSeleccionados">0</span> / 7 seleccionados</div>
+        <div class="botones">
+          <button onclick="siguientePaso()" class="btn-primary" id="btnSiguiente" disabled>
+            Continuar a Votación de Líder
+          </button>
+        </div>
+      </div>
+
+      <!-- Paso 2: Líder -->
+      <div class="paso" id="paso2" style="display:none;">
+        <h2>Votación para Líder de la Organización</h2>
+        <p class="instrucciones">Selecciona <strong>1 candidato</strong> para ser el líder.</p>
+        <div class="candidatos-grid" id="candidatosLider"></div>
+        <div class="contador"><span id="contadorLider">0</span> / 1 seleccionado</div>
+        <div class="botones">
+          <button onclick="pasoAnterior()" class="btn-secondary">Volver</button>
+          <button onclick="enviarVotos()" class="btn-primary" id="btnEnviar" disabled>Confirmar Votos</button>
+        </div>
+      </div>
+    </div>
+    <div id="mensajeVotacion" class="message"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    let seleccionadosOrg = [];
+    let seleccionadoLider = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Verificar sesión
+      const sesion = await API.sesion();
+      if (!sesion.autenticado) { window.location.href = '/'; return; }
+      if (sesion.role === 'admin_votaciones') { window.location.href = '/admin-panel.html'; return; }
+
+      document.getElementById('userName').textContent = `Bienvenido/a: ${sesion.username}`;
+
+      // Verificar estado votación
+      const estado = await API.estadoVotacion();
+      if (!estado.activa) {
+        if (estado.finalizada) { window.location.href = '/resultados.html'; }
+        else { mostrarMensaje('La votación aún no ha comenzado.', 'info', 'mensajeVotacion'); }
+        return;
+      }
+
+      // Verificar si ya votó
+      const miEstado = await API.miEstado();
+      if (miEstado.haVotadoOrg && miEstado.haVotadoLider) {
+        window.location.href = '/espera.html'; return;
+      }
+
+      // Si ya votó organización, saltar al paso 2
+      if (miEstado.haVotadoOrg) {
+        document.getElementById('paso1').style.display = 'none';
+        document.getElementById('paso2').style.display = 'block';
+        await cargarCandidatosLider();
+        return;
+      }
+
+      await cargarCandidatosOrg();
+    });
+
+    async function cargarCandidatosOrg() {
+      const candidatos = await API.getCandidatos('organizacion');
+      const grid = document.getElementById('candidatosOrganizacion');
+      grid.innerHTML = candidatos.map(c => `
+        <div class="candidato-card" id="card-org-${c.id}" onclick="toggleOrg(${c.id}, this)">
+          <h3>${c.nombre}</h3>
+          <p>${c.descripcion || ''}</p>
+          <span class="badge">Organización</span>
+        </div>
+      `).join('');
+    }
+
+    async function cargarCandidatosLider() {
+      const candidatos = await API.getCandidatos('lider');
+      const grid = document.getElementById('candidatosLider');
+      grid.innerHTML = candidatos.map(c => `
+        <div class="candidato-card" id="card-lider-${c.id}" onclick="toggleLider(${c.id}, this)">
+          <h3>${c.nombre}</h3>
+          <p>${c.descripcion || ''}</p>
+          <span class="badge">Líder</span>
+        </div>
+      `).join('');
+    }
+
+    function toggleOrg(id, el) {
+      const idx = seleccionadosOrg.indexOf(id);
+      if (idx > -1) {
+        seleccionadosOrg.splice(idx, 1);
+        el.classList.remove('seleccionado');
+      } else if (seleccionadosOrg.length < 7) {
+        seleccionadosOrg.push(id);
+        el.classList.add('seleccionado');
+      }
+      document.getElementById('contadorSeleccionados').textContent = seleccionadosOrg.length;
+      document.getElementById('btnSiguiente').disabled = seleccionadosOrg.length === 0;
+    }
+
+    function toggleLider(id, el) {
+      document.querySelectorAll('#candidatosLider .candidato-card').forEach(c => c.classList.remove('seleccionado'));
+      seleccionadoLider = id;
+      el.classList.add('seleccionado');
+      document.getElementById('contadorLider').textContent = 1;
+      document.getElementById('btnEnviar').disabled = false;
+    }
+
+    async function siguientePaso() {
+      const res = await API.votarOrganizacion(seleccionadosOrg);
+      if (res.success) {
+        document.getElementById('paso1').style.display = 'none';
+        document.getElementById('paso2').style.display = 'block';
+        await cargarCandidatosLider();
+      } else {
+        mostrarMensaje(res.error || 'Error al registrar voto', 'error', 'mensajeVotacion');
+      }
+    }
+
+    function pasoAnterior() {
+      document.getElementById('paso2').style.display = 'none';
+      document.getElementById('paso1').style.display = 'block';
+    }
+
+    async function enviarVotos() {
+      if (!seleccionadoLider) { mostrarMensaje('Selecciona un líder', 'error', 'mensajeVotacion'); return; }
+      const res = await API.votarLider(seleccionadoLider);
+      if (res.success) {
+        mostrarMensaje('¡Votos registrados correctamente!', 'success', 'mensajeVotacion');
+        setTimeout(() => window.location.href = '/espera.html', 1500);
+      } else {
+        mostrarMensaje(res.error || 'Error al registrar voto', 'error', 'mensajeVotacion');
+      }
+    }
+  </script>
+</body>
+</html>
