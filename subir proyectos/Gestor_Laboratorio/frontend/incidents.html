@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incidentes — Gestor</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <h1>🧪 Gestor de Laboratorios</h1>
+    <a href="index.html">Dashboard</a>
+    <a href="labs.html">Laboratorios</a>
+    <a href="computers.html">Computadoras</a>
+    <a href="incidents.html" class="active">Incidentes</a>
+    <button class="btn-logout" onclick="API.logout()">Cerrar Sesión</button>
+  </nav>
+  <div class="main">
+    <p class="page-title">Incidentes</p>
+    <p class="page-subtitle">Reportes de problemas en equipos</p>
+
+    <div class="card">
+      <h2>Reportar Incidente</h2>
+      <form id="formInc" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin:0"><label>Computadora</label>
+          <select id="incComputer" required><option value="">Seleccionar...</option></select>
+        </div>
+        <div class="form-group" style="margin:0"><label>Título</label><input type="text" id="incTitle" required></div>
+        <div class="form-group" style="margin:0;grid-column:span 2"><label>Descripción</label>
+          <textarea id="incDesc" required></textarea>
+        </div>
+        <div style="grid-column:span 2">
+          <button type="submit" class="btn btn-primary">Reportar Incidente</button>
+        </div>
+      </form>
+      <div id="msgInc" class="message"></div>
+    </div>
+
+    <div class="card">
+      <h2>Incidentes registrados</h2>
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <select id="filterStatus" onchange="loadIncidents()" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+          <option value="">Todos los estados</option>
+          <option value="OPEN">Abiertos</option>
+          <option value="IN_PROGRESS">En progreso</option>
+          <option value="RESOLVED">Resueltos</option>
+          <option value="CLOSED">Cerrados</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Título</th><th>Computadora</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr>
+        </thead>
+        <tbody id="incidentsTable"><tr><td colspan="5" style="text-align:center;color:#aaa">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal editar estado -->
+  <div id="editModal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <h2>Actualizar Incidente</h2>
+      <input type="hidden" id="editId">
+      <div class="form-group"><label>Título</label><input type="text" id="editTitle"></div>
+      <div class="form-group"><label>Descripción</label><textarea id="editDesc"></textarea></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="editStatus">
+          <option value="OPEN">Abierto</option>
+          <option value="IN_PROGRESS">En progreso</option>
+          <option value="RESOLVED">Resuelto</option>
+          <option value="CLOSED">Cerrado</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveInc()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    if (!API.isLoggedIn()) window.location.href = '/login.html';
+    let allIncidents = [];
+
+    async function init() {
+      const res = await API.getComputers();
+      const computers = res.data?.data || [];
+      document.getElementById('incComputer').innerHTML =
+        '<option value="">Seleccionar...</option>' +
+        computers.map(c => `<option value="${c.id}">${c.serial_number}${c.brand ? ` — ${c.brand}` : ''}</option>`).join('');
+
+      const params = new URLSearchParams(location.search);
+      const computerId = params.get('computer');
+      if (computerId) { document.getElementById('incComputer').value = computerId; }
+
+      await loadIncidents();
+    }
+
+    async function loadIncidents() {
+      const res = await API.getIncidents();
+      allIncidents = res.data?.data || [];
+      const filter = document.getElementById('filterStatus').value;
+      const filtered = filter ? allIncidents.filter(i => i.status === filter) : allIncidents;
+      const tbody = document.getElementById('incidentsTable');
+      if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa">Sin incidentes</td></tr>'; return; }
+      tbody.innerHTML = filtered.map(i => `
+        <tr>
+          <td><strong>${i.title}</strong><br><small style="color:#888">${i.description?.slice(0,60)}...</small></td>
+          <td>${i.computer?.serial_number || '—'}</td>
+          <td><span class="badge badge-${i.status}">${i.status}</span></td>
+          <td style="font-size:12px;color:#888">${new Date(i.created_at).toLocaleDateString('es')}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="openEdit(${JSON.stringify(i).replace(/"/g,'&quot;')})">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteInc('${i.id}')">Eliminar</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    document.getElementById('formInc').addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await API.createIncident({
+        computer_id: document.getElementById('incComputer').value,
+        title: document.getElementById('incTitle').value,
+        description: document.getElementById('incDesc').value
+      });
+      const msg = document.getElementById('msgInc');
+      if (res.ok) {
+        msg.textContent = 'Incidente reportado correctamente'; msg.className = 'message success';
+        e.target.reset(); await loadIncidents();
+      } else {
+        msg.textContent = res.data?.message || 'Error'; msg.className = 'message error';
+      }
+    });
+
+    function openEdit(inc) {
+      document.getElementById('editId').value = inc.id;
+      document.getElementById('editTitle').value = inc.title;
+      document.getElementById('editDesc').value = inc.description;
+      document.getElementById('editStatus').value = inc.status;
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    async function saveInc() {
+      const id = document.getElementById('editId').value;
+      await API.updateIncident(id, {
+        title: document.getElementById('editTitle').value,
+        description: document.getElementById('editDesc').value,
+        status: document.getElementById('editStatus').value
+      });
+      closeModal(); await loadIncidents();
+    }
+
+    async function deleteInc(id) {
+      if (!confirm('¿Eliminar este incidente?')) return;
+      await API.deleteIncident(id); await loadIncidents();
+    }
+
+    init();
+  </script>
+</body>
+</html>

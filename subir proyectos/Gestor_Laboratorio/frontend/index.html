@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Laboratorios</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <h1>🧪 Gestor de Laboratorios</h1>
+    <div class="user-info">
+      <span id="userEmail"></span>
+      <button onclick="logout()" class="btn-secondary btn-sm">Cerrar Sesión</button>
+    </div>
+  </nav>
+
+  <div class="main-container">
+    <div class="sidebar">
+      <div class="section-title">Menú</div>
+      <a href="#" class="active" onclick="showPage('dashboard')">📊 Dashboard</a>
+      <a href="#" onclick="showPage('labs')">🏫 Laboratorios</a>
+      <a href="#" onclick="showPage('computers')">💻 Computadoras</a>
+      <a href="#" onclick="showPage('incidents')">⚠️ Incidentes</a>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header"><h2>Dashboard</h2></div>
+        <div class="stats-grid">
+          <div class="stat-card"><h3>Laboratorios</h3><p id="statLabs">-</p></div>
+          <div class="stat-card"><h3>Computadoras</h3><p id="statComputers">-</p></div>
+          <div class="stat-card"><h3>Incidentes Abiertos</h3><p id="statIncidents">-</p></div>
+          <div class="stat-card"><h3>En Mantenimiento</h3><p id="statMaint">-</p></div>
+        </div>
+        <div class="card">
+          <h3>Estado del Sistema</h3>
+          <p style="color:#27ae60">✅ Servidor funcionando en puerto 4005</p>
+        </div>
+      </div>
+
+      <!-- LABORATORIOS -->
+      <div class="page" id="page-labs">
+        <div class="page-header">
+          <h2>Laboratorios</h2>
+          <button class="btn-primary" onclick="toggleForm('formLab')">+ Nuevo Laboratorio</button>
+        </div>
+
+        <div class="card" id="formLab" style="display:none">
+          <h3 id="formLabTitle">Nuevo Laboratorio</h3>
+          <input type="hidden" id="labId">
+          <div class="form-grid">
+            <div class="form-group"><label>Nombre:</label><input type="text" id="labName" placeholder="Ej: Laboratorio A"></div>
+            <div class="form-group"><label>Ubicación:</label><input type="text" id="labLocation" placeholder="Ej: Edificio 3, Piso 2"></div>
+            <div class="form-group"><label>Capacidad:</label><input type="number" id="labCapacity" placeholder="Ej: 30" min="1"></div>
+            <div class="form-group">
+              <label>Estado:</label>
+              <select id="labStatus">
+                <option value="ACTIVE">Activo</option>
+                <option value="INACTIVE">Inactivo</option>
+                <option value="MAINTENANCE">Mantenimiento</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-primary" onclick="saveLab()">Guardar</button>
+            <button class="btn-secondary" onclick="toggleForm('formLab')">Cancelar</button>
+          </div>
+          <div id="msgLab" class="message"></div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Nombre</th><th>Ubicación</th><th>Capacidad</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="tableLabs"><tr><td colspan="5" class="empty-state"><p>Cargando...</p></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPUTADORAS -->
+      <div class="page" id="page-computers">
+        <div class="page-header">
+          <h2>Computadoras</h2>
+          <button class="btn-primary" onclick="toggleForm('formComputer')">+ Nueva Computadora</button>
+        </div>
+
+        <div class="card" id="formComputer" style="display:none">
+          <h3 id="formComputerTitle">Nueva Computadora</h3>
+          <input type="hidden" id="computerId">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Laboratorio:</label>
+              <select id="computerLab"></select>
+            </div>
+            <div class="form-group"><label>Número de Serie:</label><input type="text" id="computerSerial" placeholder="Ej: SN-001"></div>
+            <div class="form-group"><label>Marca:</label><input type="text" id="computerBrand" placeholder="Ej: Dell"></div>
+            <div class="form-group"><label>Modelo:</label><input type="text" id="computerModel" placeholder="Ej: OptiPlex 7090"></div>
+            <div class="form-group">
+              <label>Estado:</label>
+              <select id="computerStatus">
+                <option value="AVAILABLE">Disponible</option>
+                <option value="IN_USE">En Uso</option>
+                <option value="BROKEN">Rota</option>
+                <option value="MAINTENANCE">Mantenimiento</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-primary" onclick="saveComputer()">Guardar</button>
+            <button class="btn-secondary" onclick="toggleForm('formComputer')">Cancelar</button>
+          </div>
+          <div id="msgComputer" class="message"></div>
+        </div>
+
+        <div class="card">
+          <div style="margin-bottom:15px;display:flex;gap:10px;align-items:center">
+            <label style="font-weight:600">Filtrar por Lab:</label>
+            <select id="filterLab" onchange="loadComputers()" style="padding:8px;border:2px solid #e0e0e0;border-radius:8px">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Serie</th><th>Marca/Modelo</th><th>Laboratorio</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="tableComputers"><tr><td colspan="5" class="empty-state"><p>Cargando...</p></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- INCIDENTES -->
+      <div class="page" id="page-incidents">
+        <div class="page-header">
+          <h2>Incidentes</h2>
+          <button class="btn-primary" onclick="toggleForm('formIncident')">+ Reportar Incidente</button>
+        </div>
+
+        <div class="card" id="formIncident" style="display:none">
+          <h3 id="formIncidentTitle">Reportar Incidente</h3>
+          <input type="hidden" id="incidentId">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Computadora:</label>
+              <select id="incidentComputer"></select>
+            </div>
+            <div class="form-group">
+              <label>Estado:</label>
+              <select id="incidentStatus">
+                <option value="OPEN">Abierto</option>
+                <option value="IN_PROGRESS">En Progreso</option>
+                <option value="RESOLVED">Resuelto</option>
+                <option value="CLOSED">Cerrado</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label>Título:</label><input type="text" id="incidentTitle" placeholder="Descripción breve del problema"></div>
+          <div class="form-group"><label>Descripción:</label><textarea id="incidentDesc" rows="3" placeholder="Detalla el problema..."></textarea></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-primary" onclick="saveIncident()">Guardar</button>
+            <button class="btn-secondary" onclick="toggleForm('formIncident')">Cancelar</button>
+          </div>
+          <div id="msgIncident" class="message"></div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Título</th><th>Computadora</th><th>Laboratorio</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
+              <tbody id="tableIncidents"><tr><td colspan="6" class="empty-state"><p>Cargando...</p></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Verificar sesión
+    if (!localStorage.getItem('labs_token')) window.location.href = '/login.html';
+    document.getElementById('userEmail').textContent = localStorage.getItem('labs_user') || '';
+
+    function logout() { clearToken(); window.location.href = '/login.html'; }
+
+    function showPage(name) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+      event.target.classList.add('active');
+      if (name === 'dashboard') loadDashboard();
+      if (name === 'labs') loadLabs();
+      if (name === 'computers') loadComputers();
+      if (name === 'incidents') loadIncidents();
+    }
+
+    function toggleForm(id) {
+      const f = document.getElementById(id);
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // ── DASHBOARD ────────────────────────────────────────
+    async function loadDashboard() {
+      const [labs, computers, incidents] = await Promise.all([
+        API.getLabs(), API.getComputers(), API.getIncidents()
+      ]);
+      document.getElementById('statLabs').textContent = (labs.data || []).length;
+      document.getElementById('statComputers').textContent = (computers.data || []).length;
+      document.getElementById('statIncidents').textContent = (incidents.data || []).filter(i => i.status === 'OPEN').length;
+      document.getElementById('statMaint').textContent = (computers.data || []).filter(c => c.status === 'MAINTENANCE').length;
+    }
+
+    // ── LABS ─────────────────────────────────────────────
+    let labsCache = [];
+
+    async function loadLabs() {
+      const res = await API.getLabs();
+      labsCache = res.data || [];
+      const tbody = document.getElementById('tableLabs');
+      if (!labsCache.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><p>No hay laboratorios registrados</p></td></tr>'; return; }
+      tbody.innerHTML = labsCache.map(l => `
+        <tr>
+          <td><strong>${l.name}</strong></td>
+          <td>${l.location}</td>
+          <td>${l.capacity}</td>
+          <td><span class="badge badge-${l.status}">${l.status}</span></td>
+          <td style="display:flex;gap:5px">
+            <button class="btn-secondary btn-sm" onclick="editLab('${l.id}')">Editar</button>
+            <button class="btn-danger btn-sm" onclick="deleteLab('${l.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function saveLab() {
+      const id = document.getElementById('labId').value;
+      const body = {
+        name: document.getElementById('labName').value.trim(),
+        location: document.getElementById('labLocation').value.trim(),
+        capacity: parseInt(document.getElementById('labCapacity').value),
+        status: document.getElementById('labStatus').value
+      };
+      if (!body.name || !body.location || !body.capacity) { mostrarMsg('msgLab', 'Completa todos los campos', 'error'); return; }
+      const res = id ? await API.updateLab(id, body) : await API.createLab(body);
+      if (res.ok) {
+        mostrarMsg('msgLab', id ? 'Laboratorio actualizado' : 'Laboratorio creado', 'success');
+        document.getElementById('formLab').style.display = 'none';
+        resetLabForm();
+        await loadLabs();
+      } else {
+        mostrarMsg('msgLab', res.message || 'Error al guardar', 'error');
+      }
+    }
+
+    function editLab(id) {
+      const lab = labsCache.find(l => l.id === id);
+      if (!lab) return;
+      document.getElementById('labId').value = lab.id;
+      document.getElementById('labName').value = lab.name;
+      document.getElementById('labLocation').value = lab.location;
+      document.getElementById('labCapacity').value = lab.capacity;
+      document.getElementById('labStatus').value = lab.status;
+      document.getElementById('formLabTitle').textContent = 'Editar Laboratorio';
+      document.getElementById('formLab').style.display = 'block';
+    }
+
+    async function deleteLab(id) {
+      if (!confirm('¿Eliminar este laboratorio?')) return;
+      const res = await API.deleteLab(id);
+      if (res.ok) await loadLabs();
+      else alert('Error: ' + (res.message || 'No se pudo eliminar'));
+    }
+
+    function resetLabForm() {
+      document.getElementById('labId').value = '';
+      document.getElementById('labName').value = '';
+      document.getElementById('labLocation').value = '';
+      document.getElementById('labCapacity').value = '';
+      document.getElementById('labStatus').value = 'ACTIVE';
+      document.getElementById('formLabTitle').textContent = 'Nuevo Laboratorio';
+    }
+
+    // ── COMPUTERS ─────────────────────────────────────────
+    let computersCache = [];
+
+    async function loadComputers() {
+      // Cargar labs para el select
+      if (!labsCache.length) { const r = await API.getLabs(); labsCache = r.data || []; }
+      const labSelect = document.getElementById('computerLab');
+      const filterSelect = document.getElementById('filterLab');
+      const labOptions = labsCache.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+      labSelect.innerHTML = labOptions;
+      filterSelect.innerHTML = '<option value="">Todos</option>' + labOptions;
+
+      const filterVal = filterSelect.value;
+      const res = filterVal ? await API.getComputersByLab(filterVal) : await API.getComputers();
+      computersCache = res.data || [];
+      const tbody = document.getElementById('tableComputers');
+      if (!computersCache.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><p>No hay computadoras registradas</p></td></tr>'; return; }
+      tbody.innerHTML = computersCache.map(c => `
+        <tr>
+          <td><strong>${c.serial_number}</strong></td>
+          <td>${c.brand || ''} ${c.model || ''}</td>
+          <td>${c.lab?.name || '-'}</td>
+          <td><span class="badge badge-${c.status}">${c.status}</span></td>
+          <td style="display:flex;gap:5px">
+            <button class="btn-secondary btn-sm" onclick="editComputer('${c.id}')">Editar</button>
+            <button class="btn-danger btn-sm" onclick="deleteComputer('${c.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function saveComputer() {
+      const id = document.getElementById('computerId').value;
+      const body = {
+        labId: document.getElementById('computerLab').value,
+        serialNumber: document.getElementById('computerSerial').value.trim(),
+        brand: document.getElementById('computerBrand').value.trim(),
+        model: document.getElementById('computerModel').value.trim(),
+        status: document.getElementById('computerStatus').value
+      };
+      if (!body.labId || !body.serialNumber) { mostrarMsg('msgComputer', 'Selecciona un lab y el número de serie', 'error'); return; }
+      const res = id ? await API.updateComputer(id, body) : await API.createComputer(body);
+      if (res.ok) {
+        mostrarMsg('msgComputer', id ? 'Computadora actualizada' : 'Computadora creada', 'success');
+        document.getElementById('formComputer').style.display = 'none';
+        resetComputerForm();
+        await loadComputers();
+      } else {
+        mostrarMsg('msgComputer', res.message || 'Error al guardar', 'error');
+      }
+    }
+
+    function editComputer(id) {
+      const c = computersCache.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('computerId').value = c.id;
+      document.getElementById('computerLab').value = c.lab_id;
+      document.getElementById('computerSerial').value = c.serial_number;
+      document.getElementById('computerBrand').value = c.brand || '';
+      document.getElementById('computerModel').value = c.model || '';
+      document.getElementById('computerStatus').value = c.status;
+      document.getElementById('formComputerTitle').textContent = 'Editar Computadora';
+      document.getElementById('formComputer').style.display = 'block';
+    }
+
+    async function deleteComputer(id) {
+      if (!confirm('¿Eliminar esta computadora?')) return;
+      const res = await API.deleteComputer(id);
+      if (res.ok) await loadComputers();
+      else alert('Error: ' + (res.message || 'No se pudo eliminar'));
+    }
+
+    function resetComputerForm() {
+      ['computerId','computerSerial','computerBrand','computerModel'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('computerStatus').value = 'AVAILABLE';
+      document.getElementById('formComputerTitle').textContent = 'Nueva Computadora';
+    }
+
+    // ── INCIDENTS ─────────────────────────────────────────
+    let incidentsCache = [];
+
+    async function loadIncidents() {
+      // Cargar computadoras para el select
+      if (!computersCache.length) { const r = await API.getComputers(); computersCache = r.data || []; }
+      document.getElementById('incidentComputer').innerHTML = computersCache
+        .map(c => `<option value="${c.id}">${c.serial_number} — ${c.lab?.name || ''}</option>`).join('');
+
+      const res = await API.getIncidents();
+      incidentsCache = res.data || [];
+      const tbody = document.getElementById('tableIncidents');
+      if (!incidentsCache.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>No hay incidentes registrados</p></td></tr>'; return; }
+      tbody.innerHTML = incidentsCache.map(i => `
+        <tr>
+          <td><strong>${i.title}</strong></td>
+          <td>${i.computer?.serial_number || '-'}</td>
+          <td>${i.computer?.lab?.name || '-'}</td>
+          <td><span class="badge badge-${i.status}">${i.status}</span></td>
+          <td>${new Date(i.created_at).toLocaleDateString()}</td>
+          <td style="display:flex;gap:5px">
+            <button class="btn-secondary btn-sm" onclick="editIncident('${i.id}')">Editar</button>
+            <button class="btn-danger btn-sm" onclick="deleteIncident('${i.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function saveIncident() {
+      const id = document.getElementById('incidentId').value;
+      const body = {
+        computerId: document.getElementById('incidentComputer').value,
+        title: document.getElementById('incidentTitle').value.trim(),
+        description: document.getElementById('incidentDesc').value.trim(),
+        status: document.getElementById('incidentStatus').value
+      };
+      if (!body.computerId || !body.title || !body.description) { mostrarMsg('msgIncident', 'Completa todos los campos', 'error'); return; }
+      const res = id ? await API.updateIncident(id, body) : await API.createIncident(body);
+      if (res.ok) {
+        mostrarMsg('msgIncident', id ? 'Incidente actualizado' : 'Incidente reportado', 'success');
+        document.getElementById('formIncident').style.display = 'none';
+        resetIncidentForm();
+        await loadIncidents();
+      } else {
+        mostrarMsg('msgIncident', res.message || 'Error al guardar', 'error');
+      }
+    }
+
+    function editIncident(id) {
+      const i = incidentsCache.find(x => x.id === id);
+      if (!i) return;
+      document.getElementById('incidentId').value = i.id;
+      document.getElementById('incidentComputer').value = i.computer_id;
+      document.getElementById('incidentTitle').value = i.title;
+      document.getElementById('incidentDesc').value = i.description;
+      document.getElementById('incidentStatus').value = i.status;
+      document.getElementById('formIncidentTitle').textContent = 'Editar Incidente';
+      document.getElementById('formIncident').style.display = 'block';
+    }
+
+    async function deleteIncident(id) {
+      if (!confirm('¿Eliminar este incidente?')) return;
+      const res = await API.deleteIncident(id);
+      if (res.ok) await loadIncidents();
+      else alert('Error: ' + (res.message || 'No se pudo eliminar'));
+    }
+
+    function resetIncidentForm() {
+      ['incidentId','incidentTitle','incidentDesc'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('incidentStatus').value = 'OPEN';
+      document.getElementById('formIncidentTitle').textContent = 'Reportar Incidente';
+    }
+
+    // Cargar dashboard al inicio
+    loadDashboard();
+  </script>
+</body>
+</html>
