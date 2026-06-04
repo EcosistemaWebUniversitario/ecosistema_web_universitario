@@ -4,8 +4,8 @@ const router  = express.Router();
 const { supabaseVotaciones: supabase } = require('../db/supabase');
 const { loginRequired } = require('../middleware/auth');
 
-// GET /api/votacion/estado — verificar si la votación está activa
-router.get('/api/votacion/estado', async (req, res) => {
+// GET /votacion/estado — verificar si la votación está activa (público, no necesita login)
+router.get('/votacion/estado', async (req, res) => {
   try {
     const { data: config } = await supabase.from('configuracion').select('*').eq('id', 1).single();
     if (!config) return res.json({ activa: false, finalizada: false });
@@ -28,10 +28,10 @@ router.get('/api/votacion/estado', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/votacion/votar-organizacion
-router.post('/api/votacion/votar-organizacion', loginRequired, async (req, res) => {
+// POST /votacion/votar-organizacion
+router.post('/votacion/votar-organizacion', loginRequired, async (req, res) => {
   const { candidato_ids } = req.body;
-  const usuario_id = req.session.userId;
+  const usuario_id = req.user.id;   // ← JWT
 
   if (!Array.isArray(candidato_ids) || candidato_ids.length === 0)
     return res.status(400).json({ error: 'Debes seleccionar al menos un candidato' });
@@ -53,15 +53,15 @@ router.post('/api/votacion/votar-organizacion', loginRequired, async (req, res) 
     const { error } = await supabase.from('voto_organizacion').insert(votos);
     if (error) throw error;
 
-    req.session.haVotadoOrg = true;
+    // Ya no usamos sesión, simplemente devolvemos éxito
     res.json({ success: true, message: 'Voto por organización registrado' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/votacion/votar-lider
-router.post('/api/votacion/votar-lider', loginRequired, async (req, res) => {
+// POST /votacion/votar-lider
+router.post('/votacion/votar-lider', loginRequired, async (req, res) => {
   const { candidato_id } = req.body;
-  const usuario_id = req.session.userId;
+  const usuario_id = req.user.id;   // ← JWT
 
   if (!candidato_id) return res.status(400).json({ error: 'Debes seleccionar un candidato' });
 
@@ -78,14 +78,13 @@ router.post('/api/votacion/votar-lider', loginRequired, async (req, res) => {
     const { error } = await supabase.from('voto_lider').insert({ usuario_id, candidato_id });
     if (error) throw error;
 
-    req.session.haVotadoLider = true;
     res.json({ success: true, message: 'Voto para líder registrado' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/votacion/mi-estado — ver si el usuario ya votó
-router.get('/api/votacion/mi-estado', loginRequired, async (req, res) => {
-  const usuario_id = req.session.userId;
+// GET /votacion/mi-estado — ver si el usuario ya votó
+router.get('/votacion/mi-estado', loginRequired, async (req, res) => {
+  const usuario_id = req.user.id;
   try {
     const { data: votoOrg } = await supabase.from('voto_organizacion')
       .select('id').eq('usuario_id', usuario_id).limit(1);

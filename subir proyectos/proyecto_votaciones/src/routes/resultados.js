@@ -4,13 +4,12 @@ const router  = express.Router();
 const { supabaseVotaciones: supabase, supabaseAdmin } = require('../db/supabase');
 const { loginRequired, adminRequired } = require('../middleware/auth');
 
-// GET /api/resultados — resultados de la votación
-router.get('/api/resultados', loginRequired, async (req, res) => {
+// GET /resultados — resultados de la votación
+router.get('/resultados', loginRequired, async (req, res) => {
   try {
-    // Verificar que votación haya terminado (salvo admin)
     const { data: config } = await supabase.from('configuracion').select('*').eq('id', 1).single();
     const ahora = new Date().toISOString();
-    const esAdmin = req.session.userRole === 'admin_votaciones';
+    const esAdmin = req.user.role === 'admin_votaciones';   // ← JWT
 
     if (!esAdmin && config && ahora <= config.fin_votacion)
       return res.status(403).json({ error: 'La votación aún no ha finalizado' });
@@ -51,16 +50,16 @@ router.get('/api/resultados', loginRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/admin/configuracion
-router.get('/api/admin/configuracion', adminRequired, async (req, res) => {
+// GET /admin/configuracion
+router.get('/admin/configuracion', adminRequired, async (req, res) => {
   try {
     const { data } = await supabase.from('configuracion').select('*').eq('id', 1).single();
     res.json(data || {});
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT /api/admin/configuracion
-router.put('/api/admin/configuracion', adminRequired, async (req, res) => {
+// PUT /admin/configuracion
+router.put('/admin/configuracion', adminRequired, async (req, res) => {
   const { inicio_votacion, fin_votacion } = req.body;
   try {
     const { data: existing } = await supabase.from('configuracion').select('id').eq('id', 1).single();
@@ -77,8 +76,8 @@ router.put('/api/admin/configuracion', adminRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/admin/estadisticas
-router.get('/api/admin/estadisticas', adminRequired, async (req, res) => {
+// GET /admin/estadisticas
+router.get('/admin/estadisticas', adminRequired, async (req, res) => {
   try {
     const { count: totalCandidatos } = await supabase
       .from('candidato').select('id', { count: 'exact', head: true });

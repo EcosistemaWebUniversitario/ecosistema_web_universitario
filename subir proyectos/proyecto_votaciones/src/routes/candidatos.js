@@ -4,9 +4,8 @@ const router  = express.Router();
 const { supabaseAdmin, supabaseVotaciones } = require('../db/supabase');
 const { loginRequired, adminRequired } = require('../middleware/auth');
 
-// GET /api/estudiantes/buscar
-// Busca en public.profiles filtrando por rol estudiante
-router.get('/api/estudiantes/buscar', adminRequired, async (req, res) => {
+// GET /estudiantes/buscar → busca en public.profiles estudiantes
+router.get('/estudiantes/buscar', adminRequired, async (req, res) => {
   const { q } = req.query;
   if (!q || q.trim().length < 2) return res.json([]);
 
@@ -33,8 +32,8 @@ router.get('/api/estudiantes/buscar', adminRequired, async (req, res) => {
   }
 });
 
-// GET /api/candidatos
-router.get('/api/candidatos', loginRequired, async (req, res) => {
+// GET /candidatos
+router.get('/candidatos', loginRequired, async (req, res) => {
   try {
     const tipo = req.query.tipo;
     let q = supabaseVotaciones.from('candidato').select('*').order('nombre');
@@ -42,20 +41,18 @@ router.get('/api/candidatos', loginRequired, async (req, res) => {
     else if (tipo === 'lider') q = q.in('tipo', ['lider', 'ambos']);
     const { data, error } = await q;
     if (error) throw error;
-    console.log(`[candidatos] tipo=${tipo || 'todos'} → ${(data||[]).length} resultados`);
     res.json(data || []);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/candidatos — solo admin
-router.post('/api/candidatos', adminRequired, async (req, res) => {
+// POST /candidatos — solo admin
+router.post('/candidatos', adminRequired, async (req, res) => {
   const { profile_id, tipo, descripcion = '', foto = '' } = req.body;
 
   if (!tipo) return res.status(400).json({ error: 'El tipo de candidatura es requerido' });
   if (!profile_id) return res.status(400).json({ error: 'Debes seleccionar un estudiante' });
 
   try {
-    // Verificar que el perfil existe y es estudiante
     const { data: perfil, error: perfErr } = await supabaseAdmin
       .from('profiles')
       .select('id, full_name, roles(name)')
@@ -65,7 +62,6 @@ router.post('/api/candidatos', adminRequired, async (req, res) => {
     if (perfErr || !perfil) return res.status(400).json({ error: 'Estudiante no encontrado' });
     if (perfil.roles?.name !== 'estudiante') return res.status(400).json({ error: 'El usuario seleccionado no es estudiante' });
 
-    // Verificar que no sea candidato ya
     const { data: yaExiste } = await supabaseVotaciones
       .from('candidato')
       .select('id')
@@ -85,14 +81,12 @@ router.post('/api/candidatos', adminRequired, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// DELETE /api/candidatos/:id — solo admin
-router.delete('/api/candidatos/:id', adminRequired, async (req, res) => {
+// DELETE /candidatos/:id — solo admin
+router.delete('/candidatos/:id', adminRequired, async (req, res) => {
   const id = req.params.id;
   try {
-    // Borrar votos asociados primero (FK constraint)
     await supabaseVotaciones.from('voto_organizacion').delete().eq('candidato_id', id);
     await supabaseVotaciones.from('voto_lider').delete().eq('candidato_id', id);
-
     const { error } = await supabaseVotaciones.from('candidato').delete().eq('id', id);
     if (error) throw error;
     res.json({ success: true });

@@ -43,16 +43,16 @@ const moduleCatalog: ModuleConfig[] = [
     allowedRoles: ['super_admin', 'admin_practicas', 'admin_prelocalizacion', 'estudiante', 'empresa'],
     available: true,
   },
-  {
+    {
     key: 'elecciones',
-    title: 'Elecciones',
+    title: 'Votaciones',
     description: 'Gestión de votaciones y procesos electorales universitarios.',
-    path: '/elecciones',
-    badge: 'Próximamente',
+    path: '/votaciones',
+    badge: 'Activo',
     color: 'from-indigo-500 to-indigo-700',
     accent: 'indigo',
     allowedRoles: ['super_admin', 'admin_votaciones', 'estudiante'],
-    available: false,
+    available: true,
   },
   {
     key: 'notas',

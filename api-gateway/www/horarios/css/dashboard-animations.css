@@ -1,11 +1,11 @@
 /* frontend/css/dashboard-animations.css */
-/* Animaciones para dashboard futurista */
+/* Animaciones para dashboard – Ecosistema Universitario */
 
 /* Tarjetas con efecto glassmorphism y hover */
 .glass-card {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
-    border-radius: 15px;
+    border-radius: var(--radius-xl, 15px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -29,7 +29,7 @@
 
 .glass-card:hover {
     transform: translateY(-5px) scale(1.02);
-    border-color: rgba(76, 201, 240, 0.5);
+    border-color: rgba(16, 185, 129, 0.5);
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -46,7 +46,7 @@
     left: 0;
     width: 0;
     height: 2px;
-    background: linear-gradient(90deg, #4cc9f0, #f72585);
+    background: linear-gradient(90deg, #10b981, #f72585);
     transition: width 0.3s ease;
 }
 
@@ -62,7 +62,7 @@
 }
 
 .table-row:hover {
-    background: rgba(76, 201, 240, 0.05);
+    background: rgba(16, 185, 129, 0.05);
     transform: translateX(5px);
 }
 
@@ -73,7 +73,7 @@
     top: 0;
     height: 100%;
     width: 0;
-    background: linear-gradient(90deg, rgba(76, 201, 240, 0.1), transparent);
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent);
     transition: width 0.3s ease;
 }
 
@@ -99,14 +99,14 @@
 .highlight-data {
     position: relative;
     font-weight: bold;
-    color: #4cc9f0;
-    text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+    color: #10b981;
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
     animation: pulseGlow 2s infinite;
 }
 
 @keyframes pulseGlow {
-    0%, 100% { text-shadow: 0 0 10px rgba(76, 201, 240, 0.5); }
-    50% { text-shadow: 0 0 20px rgba(76, 201, 240, 0.8); }
+    0%, 100% { text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(16, 185, 129, 0.8); }
 }
 
 /* Botones con efecto de carga */
@@ -177,9 +177,9 @@
 }
 
 .selectable-item.selected {
-    border-color: #4cc9f0;
-    background: rgba(76, 201, 240, 0.1);
-    box-shadow: 0 0 20px rgba(76, 201, 240, 0.3);
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
 /* Animación de entrada de página */

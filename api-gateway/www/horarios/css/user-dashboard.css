@@ -1,4 +1,4 @@
-/* Estilos adicionales para dashboard de usuario */
+/* Estilos adicionales para dashboard de usuario – Ecosistema Universitario */
 
 /* Animaciones de carga */
 @keyframes pulse {
@@ -29,18 +29,18 @@
 }
 
 .badge-outline-primary {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+    border-color: var(--color-accent, #10b981);
+    color: var(--color-accent, #10b981);
 }
 
 .badge-outline-success {
-    border-color: var(--color-success);
-    color: var(--color-success);
+    border-color: #10b981;
+    color: #10b981;
 }
 
 .badge-outline-warning {
-    border-color: var(--color-warning);
-    color: var(--color-warning);
+    border-color: var(--color-warning, #f59e0b);
+    color: var(--color-warning, #f59e0b);
 }
 
 /* Progress bars animadas */
@@ -66,7 +66,7 @@
     top: 0;
     bottom: 0;
     width: 2px;
-    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+    background: linear-gradient(to bottom, var(--color-accent, #10b981), #059669);
 }
 
 .timeline-item {
@@ -82,9 +82,9 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background-color: var(--color-primary);
+    background-color: var(--color-accent, #10b981);
     border: 3px solid white;
-    box-shadow: 0 0 0 3px var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-accent, #10b981);
 }
 
 /* Tabs responsive */
@@ -127,7 +127,7 @@
 
 /* Mejoras de accesibilidad */
 :focus {
-    outline: 3px solid var(--color-primary) !important;
+    outline: 3px solid var(--color-accent, #10b981) !important;
     outline-offset: 2px;
 }
 
@@ -142,22 +142,22 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    background: linear-gradient(135deg, var(--color-accent, #10b981) 0%, #059669 100%);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    background: linear-gradient(135deg, #059669 0%, var(--color-accent, #10b981) 100%);
 }
 
 /* Tooltips personalizados */
 .tooltip-custom .tooltip-inner {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    background: linear-gradient(135deg, var(--color-accent, #10b981) 0%, #059669 100%);
     border-radius: 8px;
     padding: 8px 12px;
     font-size: 0.85rem;
 }
 
 .tooltip-custom .tooltip-arrow::before {
-    border-top-color: var(--color-primary) !important;
+    border-top-color: var(--color-accent, #10b981) !important;
 }

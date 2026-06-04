@@ -3,905 +3,474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Profesores - Sistema de Horarios</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Gestión de Profesores – Sistema de Horarios</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a0ca3;
-            --secondary: #7209b7;
-            --accent: #00ffff;
-            --success: #4cc9f0;
-            --warning: #f8961e;
-            --danger: #f72585;
-            --dark: #1a1a2e;
-            --darker: #0a0e17;
-            --light: #f8f9fa;
-            --gray: #8892b0;
-            --card-bg: rgba(255, 255, 255, 0.05);
+        /* Animación para filas de tabla */
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
         }
-        
-        body {
-            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-        }
-        
-        .navbar-custom {
-            background: rgba(26, 26, 46, 0.95) !important;
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(67, 97, 238, 0.3);
-            padding: 15px 0;
-        }
-        
-        .navbar-brand {
-            color: var(--accent) !important;
-            font-weight: 600;
-            font-size: 1.5rem;
-        }
-        
-        .navbar-brand i {
-            color: var(--primary);
-            margin-right: 10px;
-        }
-        
-        .nav-link {
-            color: var(--gray) !important;
-            font-weight: 500;
-            padding: 8px 20px !important;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            margin: 0 5px;
-        }
-        
-        .nav-link:hover {
-            color: white !important;
-            background: rgba(67, 97, 238, 0.1);
-        }
-        
-        .nav-link.active {
-            color: var(--accent) !important;
-            background: rgba(67, 97, 238, 0.2);
-            border-bottom: 2px solid var(--accent);
-        }
-        
-        .container-fluid {
-            padding: 30px;
-        }
-        
-        h1 {
-            color: white;
-            font-weight: 600;
-            margin-bottom: 30px;
-            font-size: 2.2rem;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        h1 i {
-            color: var(--accent);
-            background: rgba(0, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 15px;
-            font-size: 1.8rem;
-        }
-        
-        .btn-primary-custom {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border: none;
-            color: white;
-            font-weight: 600;
-            padding: 12px 30px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
-        }
-        
-        .btn-primary-custom:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.4);
-            background: linear-gradient(135deg, #5a75f0 0%, #4a1cbd 100%);
-        }
-        
-        .card-custom {
-            background: var(--card-bg);
-            -webkit-backdrop-filter: blur(15px);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            margin-bottom: 30px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-        }
-        
-        .card-body {
-            padding: 25px;
-        }
-        
-        .table-custom {
-            background: transparent;
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 0;
-        }
-        
-        .table-custom thead {
-            background: linear-gradient(135deg, rgba(67, 97, 238, 0.3) 0%, rgba(58, 12, 163, 0.3) 100%);
-        }
-        
-        .table-custom th {
-            color: white;
-            font-weight: 600;
-            padding: 18px 15px;
-            border-bottom: 2px solid rgba(67, 97, 238, 0.5);
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-        }
-        
-        .table-custom td {
-            color: var(--gray);
-            padding: 16px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            vertical-align: middle;
-        }
-        
-        .table-custom tbody tr {
-            transition: all 0.3s ease;
-        }
-        
-        .table-custom tbody tr:hover {
-            background: rgba(67, 97, 238, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .btn-outline-primary {
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            font-weight: 500;
-            padding: 8px 15px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-primary:hover {
-            background: var(--primary);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
-        }
-        
-        .btn-outline-danger {
-            border: 2px solid var(--danger);
-            color: var(--danger);
-            font-weight: 500;
-            padding: 8px 15px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-danger:hover {
-            background: var(--danger);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
-        }
-        
-        .badge-activo {
-            background: linear-gradient(135deg, rgba(76, 201, 240, 0.2) 0%, rgba(67, 97, 238, 0.2) 100%);
-            color: var(--accent);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-        }
-        
-        .badge-inactivo {
-            background: linear-gradient(135deg, rgba(247, 37, 133, 0.2) 0%, rgba(114, 9, 183, 0.2) 100%);
-            color: #ff6b9d;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            border: 1px solid rgba(247, 37, 133, 0.3);
-        }
-        
-        .badge-categoria {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .modal-content {
-            background: var(--dark);
-            border: 1px solid rgba(67, 97, 238, 0.3);
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-        }
-        
-        .modal-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border-bottom: 1px solid rgba(67, 97, 238, 0.3);
-            border-radius: 20px 20px 0 0;
-            padding: 25px 30px;
-        }
-        
-        .modal-title {
-            color: white;
-            font-weight: 600;
-            font-size: 1.5rem;
-        }
-        
-        .btn-close-white {
-            filter: invert(1) brightness(200%);
-            opacity: 0.8;
-        }
-        
-        .btn-close-white:hover {
-            opacity: 1;
-        }
-        
-        .modal-body {
-            padding: 30px;
-        }
-        
-        .form-control-custom {
-            background: rgba(255, 255, 255, 0.07);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            border-radius: 10px;
-            padding: 12px 15px;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control-custom:focus {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1);
-            color: white;
-        }
-        
-        .form-control-custom::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
-        .form-label {
-            color: white;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-        
-        .modal-footer {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px 30px;
-        }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 10px 25px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .loading-state {
-            text-align: center;
-            padding: 50px 20px;
-        }
-        
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-            border-width: 3px;
-        }
-        
-        .spinner-border.text-primary {
-            color: var(--accent) !important;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: var(--gray);
-        }
-        
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-        
-        @media (max-width: 768px) {
-            .container-fluid {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 1.8rem;
-            }
-            
-            .table-responsive {
-                border-radius: 15px;
-                overflow: hidden;
-            }
-            
-            .table-custom th, .table-custom td {
-                padding: 12px 10px;
-                font-size: 0.9rem;
-            }
-            
-            .btn-primary-custom, .btn-outline-primary, .btn-outline-danger {
-                padding: 8px 12px;
-                font-size: 0.9rem;
-            }
-            
-            .modal-dialog {
-                margin: 10px;
-            }
-        }
-        
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
+        /* Notificaciones */
+        .notificacion {
+            animation: slideIn 0.3s ease-out;
         }
-        
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
+        /* Overlay de modal */
+        .modal-overlay {
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
-        
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #5a75f0 0%, #4a1cbd 100%);
-        }
-        
-        a.text-info {
-            color: var(--accent) !important;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        a.text-info:hover {
-            color: white !important;
-            text-decoration: underline;
+        .modal-overlay.active {
+            display: flex;
         }
     </style>
-</head>
-<body>
-    <!-- Navbar Futurista -->
-    <nav class="navbar navbar-expand-lg navbar-custom">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/horarios/admin/dashboard">
-                <i class="fas fa-brain-circuit"></i> SISTEMA DE HORARIOS
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon" style="color: white;"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/horarios/admin/dashboard">
-                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/horarios/admin/asignaturas">
-                            <i class="fas fa-book me-1"></i> Asignaturas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/horarios/admin/profesores" aria-current="page">
-                            <i class="fas fa-chalkboard-teacher me-1"></i> Profesores
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/horarios/admin/horarios">
-                            <i class="fas fa-calendar-alt me-1"></i> Horarios
-                        </a>
-                    </li>
-                    <li class="nav-item ms-3">
-                        <button class="btn btn-outline-danger" onclick="logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
-                            <i class="fas fa-sign-out-alt me-1"></i> Salir
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-    
-    <!-- Contenido Principal -->
-    <div class="container-fluid mt-4 fade-in">
-        <!-- Header con título y botón -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>
-                <i class="fas fa-chalkboard-teacher"></i>
-                <span>Gestión de Profesores</span>
-            </h1>
-            <button class="btn btn-primary-custom" onclick="mostrarModalNuevo()" 
-                    title="Crear nuevo profesor" aria-label="Crear nuevo profesor">
-                <i class="fas fa-plus"></i>
-                <span>Nuevo Profesor</span>
-            </button>
-        </div>
-        
-        <!-- Tarjeta con tabla -->
-        <div class="card card-custom">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-custom table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">Código</th>
-                                <th scope="col">Nombres</th>
-                                <th scope="col">Apellidos</th>
-                                <th scope="col">Categoría Académica</th>
-                                <th scope="col">Categoría Científica</th>
-                                <th scope="col">Email</th>
-                                <th scope="col">Teléfono</th>
-                                <th scope="col">Estado</th>
-                                <th scope="col">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaProfesores">
-                            <!-- Estado de carga -->
-                            <tr id="loading-row">
-                                <td colspan="9" class="text-center loading-state">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Cargando profesores...</span>
-                                    </div>
-                                    <p class="mt-3">Cargando profesores...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal para crear/editar profesor -->
-    <div class="modal fade" id="modalProfesor" tabindex="-1" aria-labelledby="modalProfesorLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitulo">Nuevo Profesor</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formProfesor">
-                        <input type="hidden" id="profesorId">
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="codigo" class="form-label">Código *</label>
-                                <input type="text" class="form-control form-control-custom" id="codigo" required 
-                                       title="Código único del profesor" 
-                                       aria-label="Código del profesor"
-                                       placeholder="Ej: PRO001">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="nombres" class="form-label">Nombres *</label>
-                                <input type="text" class="form-control form-control-custom" id="nombres" required 
-                                       title="Nombres del profesor"
-                                       aria-label="Nombres del profesor"
-                                       placeholder="Ej: Juan Carlos">
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="apellidos" class="form-label">Apellidos *</label>
-                                <input type="text" class="form-control form-control-custom" id="apellidos" required 
-                                       title="Apellidos del profesor"
-                                       aria-label="Apellidos del profesor"
-                                       placeholder="Ej: Pérez López">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="categoria_academica" class="form-label">Categoría Académica</label>
-                                <select class="form-select form-control-custom" id="categoria_academica"
-                                        title="Categoría académica del profesor"
-                                        aria-label="Categoría académica">
-                                    <option value="">Seleccione una categoría</option>
-                                    <option value="Instructor">Instructor</option>
-                                    <option value="Asistente">Asistente</option>
-                                    <option value="Auxiliar">Auxiliar</option>
-                                    <option value="Titular">Titular</option>
-                                    <option value="Profesor Titular">Profesor Titular</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="categoria_cientifica" class="form-label">Categoría Científica</label>
-                                <select class="form-select form-control-custom" id="categoria_cientifica"
-                                        title="Categoría científica del profesor"
-                                        aria-label="Categoría científica">
-                                    <option value="">Seleccione una categoría</option>
-                                    <option value="Máster">Máster</option>
-                                    <option value="Doctor">Doctor</option>
-                                    <option value="Doctor en Ciencias">Doctor en Ciencias</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control form-control-custom" id="email" 
-                                       title="Correo electrónico del profesor"
-                                       aria-label="Email del profesor"
-                                       placeholder="profesor@universidad.edu">
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="telefono" class="form-label">Teléfono</label>
-                                <input type="text" class="form-control form-control-custom" id="telefono" 
-                                       title="Número de teléfono del profesor"
-                                       aria-label="Teléfono del profesor"
-                                       placeholder="Ej: +53 12345678">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="activo" class="form-label">Estado</label>
-                                <select class="form-select form-control-custom" id="activo"
-                                        title="Estado del profesor"
-                                        aria-label="Estado">
-                                    <option value="true">Activo</option>
-                                    <option value="false">Inactivo</option>
-                                </select>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" 
-                            title="Cancelar operación" aria-label="Cancelar">
-                        Cancelar
-                    </button>
-                    <button type="button" class="btn btn-primary-custom" onclick="guardarProfesor()" 
-                            title="Guardar profesor" aria-label="Guardar">
-                        Guardar Profesor
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ═══════════════════════════════════════════
-        // AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
-        // ═══════════════════════════════════════════
-        function getToken() {
-            return localStorage.getItem('token') ??
-                   localStorage.getItem('access_token') ??
-                   localStorage.getItem('authToken');
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased">
+
+<!-- Header con gradiente del ecosistema -->
+<header class="bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-900 text-white py-4 px-4 shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-lg font-black text-white">
+                U
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight">
+                    <i class="fas fa-chalkboard-teacher mr-2"></i>Gestión de Profesores
+                </h1>
+                <p class="text-xs text-emerald-200 font-medium">Administra el claustro de profesores</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="/horarios/admin/dashboard"
+               class="inline-flex items-center rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/20 transition">
+                <i class="fas fa-arrow-left mr-1"></i> Dashboard
+            </a>
+            <button onclick="logout()"
+                    class="inline-flex items-center rounded-xl border border-red-400/30 px-3 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/20 transition">
+                <i class="fas fa-sign-out-alt mr-1"></i> Salir
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Barra de título y acción -->
+    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-5 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+            <h2 class="text-xl font-black text-slate-900">Profesores</h2>
+            <p class="text-sm text-slate-500">Crea y gestiona los profesores del sistema</p>
+        </div>
+        <button onclick="mostrarModalNuevo()"
+                class="inline-flex items-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition shadow-sm">
+            <i class="fas fa-plus mr-1"></i> Nuevo Profesor
+        </button>
+    </div>
+
+    <!-- Tabla de profesores -->
+    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Código</th>
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Nombres</th>
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Apellidos</th>
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Categ. Académica</th>
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Categ. Científica</th>
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Email</th>
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Teléfono</th>
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Estado</th>
+                        <th class="text-left p-4 font-semibold uppercase tracking-wider text-slate-500 text-xs">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaProfesores">
+                    <!-- Loading -->
+                    <tr id="loading-row">
+                        <td colspan="9" class="text-center py-16">
+                            <i class="fas fa-spinner fa-pulse text-3xl text-emerald-600 mb-3"></i>
+                            <p class="text-slate-500">Cargando profesores...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Modal de profesor -->
+<div id="modalProfesorOverlay" class="fixed inset-0 z-50 modal-overlay bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl m-4 overflow-hidden ring-1 ring-slate-200 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between p-5 border-b border-slate-100">
+            <h2 id="modalTitulo" class="text-lg font-bold text-slate-900">Nuevo Profesor</h2>
+            <button onclick="cerrarModalProfesor()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+        </div>
+        <div class="overflow-y-auto p-5 space-y-4">
+            <form id="formProfesor" class="space-y-4">
+                <input type="hidden" id="profesorId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="codigo" class="block text-sm font-semibold text-slate-700 mb-1">Código *</label>
+                        <input type="text" id="codigo" required placeholder="Ej: PRO001"
+                               class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label for="nombres" class="block text-sm font-semibold text-slate-700 mb-1">Nombres *</label>
+                        <input type="text" id="nombres" required placeholder="Ej: Juan Carlos"
+                               class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="apellidos" class="block text-sm font-semibold text-slate-700 mb-1">Apellidos *</label>
+                        <input type="text" id="apellidos" required placeholder="Ej: Pérez López"
+                               class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label for="categoria_academica" class="block text-sm font-semibold text-slate-700 mb-1">Categoría Académica</label>
+                        <select id="categoria_academica" class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                            <option value="">Seleccione...</option>
+                            <option value="Instructor">Instructor</option>
+                            <option value="Asistente">Asistente</option>
+                            <option value="Auxiliar">Auxiliar</option>
+                            <option value="Titular">Titular</option>
+                            <option value="Profesor Titular">Profesor Titular</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="categoria_cientifica" class="block text-sm font-semibold text-slate-700 mb-1">Categoría Científica</label>
+                        <select id="categoria_cientifica" class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                            <option value="">Seleccione...</option>
+                            <option value="Máster">Máster</option>
+                            <option value="Doctor">Doctor</option>
+                            <option value="Doctor en Ciencias">Doctor en Ciencias</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-semibold text-slate-700 mb-1">Email</label>
+                        <input type="email" id="email" placeholder="profesor@universidad.edu"
+                               class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="telefono" class="block text-sm font-semibold text-slate-700 mb-1">Teléfono</label>
+                        <input type="text" id="telefono" placeholder="Ej: +53 12345678"
+                               class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label for="activo" class="block text-sm font-semibold text-slate-700 mb-1">Estado</label>
+                        <select id="activo" class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                            <option value="true">Activo</option>
+                            <option value="false">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="flex justify-end gap-3 p-5 bg-slate-50 border-t border-slate-200">
+            <button onclick="cerrarModalProfesor()"
+                    class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
+                Cancelar
+            </button>
+            <button onclick="guardarProfesor()"
+                    class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition">
+                <i class="fas fa-save mr-1"></i> Guardar Profesor
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ═══════════════════════════════════════════
+    // AUTENTICACIÓN CENTRALIZADA (JWT Supabase)
+    // ═══════════════════════════════════════════
+    function getToken() {
+        return localStorage.getItem('token') ??
+               localStorage.getItem('access_token') ??
+               localStorage.getItem('authToken');
+    }
+
+    function requireAuth() {
+        if (!getToken()) {
+            window.location.href = '/auth';
+            return false;
+        }
+        return true;
+    }
+
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        const token = getToken();
+        if (token) {
+            options.headers = options.headers || {};
+            options.headers['Authorization'] = 'Bearer ' + token;
+        }
+        return originalFetch(url, options);
+    };
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('authToken');
+        window.location.href = '/auth';
+    }
+
+    // ═══════════════════════════════════════════
+    // LÓGICA DE GESTIÓN DE PROFESORES
+    // ═══════════════════════════════════════════
+    let profesores = [];
+
+    function abrirModalProfesor() {
+        document.getElementById('modalProfesorOverlay').classList.add('active');
+    }
+    function cerrarModalProfesor() {
+        document.getElementById('modalProfesorOverlay').classList.remove('active');
+        document.getElementById('formProfesor').reset();
+    }
+
+    async function cargarProfesores() {
+        try {
+            const response = await fetch('/api/horarios/profesores');
+            if (response.ok) {
+                profesores = await response.json();
+                renderizarTabla();
+            } else {
+                mostrarError('Error al cargar los profesores');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error de conexión al servidor');
+        }
+    }
+
+    function renderizarTabla() {
+        const tbody = document.getElementById('tablaProfesores');
+        const loadingRow = document.getElementById('loading-row');
+        if (loadingRow) loadingRow.remove();
+
+        if (profesores.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center py-16 text-slate-500">
+                        <i class="fas fa-chalkboard-teacher text-5xl text-slate-300 mb-4"></i>
+                        <h3 class="text-lg font-bold text-slate-700">No hay profesores registrados</h3>
+                        <p class="text-sm mb-4">Comienza agregando tu primer profesor</p>
+                        <button onclick="mostrarModalNuevo()"
+                                class="inline-flex items-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition">
+                            <i class="fas fa-plus mr-1"></i> Crear primer profesor
+                        </button>
+                    </td>
+                </tr>`;
+            return;
         }
 
-        function requireAuth() {
-            if (!getToken()) {
-                window.location.href = '/auth';
-                return false;
+        let html = '';
+        profesores.forEach(profesor => {
+            html += `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 fade-in">
+                    <td class="p-4 font-bold text-emerald-700">${profesor.codigo}</td>
+                    <td class="p-4 text-slate-700">${profesor.nombres}</td>
+                    <td class="p-4 text-slate-700">${profesor.apellidos}</td>
+                    <td class="p-4">
+                        ${profesor.categoria_academica
+                            ? `<span class="bg-slate-100 text-slate-700 rounded-lg px-2.5 py-1 text-xs font-medium">${profesor.categoria_academica}</span>`
+                            : '<span class="text-slate-400">-</span>'}
+                    </td>
+                    <td class="p-4">
+                        ${profesor.categoria_cientifica
+                            ? `<span class="bg-slate-100 text-slate-700 rounded-lg px-2.5 py-1 text-xs font-medium">${profesor.categoria_cientifica}</span>`
+                            : '<span class="text-slate-400">-</span>'}
+                    </td>
+                    <td class="p-4">
+                        ${profesor.email
+                            ? `<a href="mailto:${profesor.email}" class="text-emerald-600 hover:text-emerald-800">${profesor.email}</a>`
+                            : '<span class="text-slate-400">-</span>'}
+                    </td>
+                    <td class="p-4 text-slate-600">${profesor.telefono || '<span class="text-slate-400">-</span>'}</td>
+                    <td class="p-4">
+                        ${profesor.activo
+                            ? '<span class="bg-emerald-100 text-emerald-700 rounded-full px-3 py-1 text-xs font-semibold">Activo</span>'
+                            : '<span class="bg-red-100 text-red-700 rounded-full px-3 py-1 text-xs font-semibold">Inactivo</span>'}
+                    </td>
+                    <td class="p-4">
+                        <div class="flex gap-1">
+                            <button onclick="editarProfesor(${profesor.id})"
+                                    class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="eliminarProfesor(${profesor.id})"
+                                    class="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function mostrarModalNuevo() {
+        document.getElementById('modalTitulo').textContent = 'Nuevo Profesor';
+        document.getElementById('formProfesor').reset();
+        document.getElementById('profesorId').value = '';
+        document.getElementById('activo').value = 'true';
+        abrirModalProfesor();
+    }
+
+    async function editarProfesor(id) {
+        try {
+            const response = await fetch(`/api/horarios/profesores/${id}`);
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || `Error ${response.status}`);
             }
-            return true;
+            const profesor = await response.json();
+            document.getElementById('modalTitulo').textContent = 'Editar Profesor';
+            document.getElementById('profesorId').value = profesor.id;
+            document.getElementById('codigo').value = profesor.codigo || '';
+            document.getElementById('nombres').value = profesor.nombres || '';
+            document.getElementById('apellidos').value = profesor.apellidos || '';
+            document.getElementById('categoria_academica').value = profesor.categoria_academica || '';
+            document.getElementById('categoria_cientifica').value = profesor.categoria_cientifica || '';
+            document.getElementById('email').value = profesor.email || '';
+            document.getElementById('telefono').value = profesor.telefono || '';
+            document.getElementById('activo').value = profesor.activo ? 'true' : 'false';
+            abrirModalProfesor();
+        } catch (error) {
+            console.error('Error al cargar el profesor:', error);
+            alert(`Error al cargar el profesor: ${error.message}`);
+        }
+    }
+
+    async function guardarProfesor() {
+        const id = document.getElementById('profesorId').value;
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/horarios/profesores/${id}` : '/api/horarios/profesores';
+        const codigo = document.getElementById('codigo').value.trim();
+        const nombres = document.getElementById('nombres').value.trim();
+        const apellidos = document.getElementById('apellidos').value.trim();
+
+        if (!codigo || !nombres || !apellidos) {
+            alert('Error: Código, nombres y apellidos son campos obligatorios');
+            return;
         }
 
-        const originalFetch = window.fetch;
-        window.fetch = function(url, options = {}) {
-            const token = getToken();
-            if (token) {
-                options.headers = options.headers || {};
-                options.headers['Authorization'] = 'Bearer ' + token;
-            }
-            return originalFetch(url, options);
+        const data = {
+            codigo, nombres, apellidos,
+            categoria_academica: document.getElementById('categoria_academica').value,
+            categoria_cientifica: document.getElementById('categoria_cientifica').value,
+            email: document.getElementById('email').value.trim(),
+            telefono: document.getElementById('telefono').value.trim(),
+            activo: document.getElementById('activo').value === 'true'
         };
 
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('authToken');
-            window.location.href = '/auth';
-        }
-
-        // ═══════════════════════════════════════════
-        // LÓGICA DE GESTIÓN DE PROFESORES
-        // ═══════════════════════════════════════════
-        let profesores = [];
-        let modalInstance = null;
-        
-        async function cargarProfesores() {
-            try {
-                const response = await fetch('/api/horarios/profesores');
-                if (response.ok) {
-                    profesores = await response.json();
-                    renderizarTabla();
-                } else {
-                    mostrarError('Error al cargar los profesores');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarError('Error de conexión al servidor');
-            }
-        }
-        
-        function renderizarTabla() {
-            const tbody = document.getElementById('tablaProfesores');
-            
-            const loadingRow = document.getElementById('loading-row');
-            if (loadingRow) loadingRow.remove();
-            
-            if (profesores.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="9" class="empty-state">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            <h5 class="mt-3">No hay profesores registrados</h5>
-                            <p class="text-muted">Comienza agregando tu primer profesor</p>
-                            <button class="btn btn-primary-custom mt-3" onclick="mostrarModalNuevo()">
-                                <i class="fas fa-plus me-1"></i> Crear primer profesor
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            let html = '';
-            profesores.forEach(profesor => {
-                html += `
-                    <tr class="fade-in">
-                        <td><strong style="color: var(--accent);">${profesor.codigo}</strong></td>
-                        <td>${profesor.nombres}</td>
-                        <td>${profesor.apellidos}</td>
-                        <td>
-                            ${profesor.categoria_academica 
-                                ? `<span class="badge-categoria">${profesor.categoria_academica}</span>` 
-                                : '<span class="text-muted">-</span>'}
-                        </td>
-                        <td>
-                            ${profesor.categoria_cientifica 
-                                ? `<span class="badge-categoria">${profesor.categoria_cientifica}</span>` 
-                                : '<span class="text-muted">-</span>'}
-                        </td>
-                        <td>
-                            ${profesor.email 
-                                ? `<a href="mailto:${profesor.email}" class="text-info">${profesor.email}</a>` 
-                                : '<span class="text-muted">-</span>'}
-                        </td>
-                        <td>${profesor.telefono || '<span class="text-muted">-</span>'}</td>
-                        <td>
-                            ${profesor.activo 
-                                ? '<span class="badge-activo">Activo</span>' 
-                                : '<span class="badge-inactivo">Inactivo</span>'}
-                        </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-outline-primary me-2" onclick="editarProfesor(${profesor.id})" 
-                                        title="Editar profesor" aria-label="Editar profesor">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="eliminarProfesor(${profesor.id})" 
-                                        title="Eliminar profesor" aria-label="Eliminar profesor">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             });
-            
-            tbody.innerHTML = html;
-        }
-        
-        function mostrarModalNuevo() {
-            document.getElementById('modalTitulo').textContent = 'Nuevo Profesor';
-            document.getElementById('formProfesor').reset();
-            document.getElementById('profesorId').value = '';
-            document.getElementById('activo').value = 'true';
-            document.getElementById('categoria_academica').value = '';
-            document.getElementById('categoria_cientifica').value = '';
-            
-            if (modalInstance) {
-                modalInstance.show();
+            const result = await response.json();
+            if (response.ok) {
+                cerrarModalProfesor();
+                await cargarProfesores();
+                mostrarNotificacion('success', result.message || 'Profesor guardado exitosamente');
             } else {
-                modalInstance = new bootstrap.Modal(document.getElementById('modalProfesor'));
-                modalInstance.show();
+                alert(`Error: ${result.error || 'Error desconocido'}`);
             }
+        } catch (error) {
+            console.error('Error de conexión:', error);
+            alert('Error de conexión al servidor');
         }
-        
-        async function editarProfesor(id) {
-            try {
-                const response = await fetch(`/api/horarios/profesores/${id}`);
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || `Error ${response.status}`);
-                }
-                
-                const profesor = await response.json();
-                
-                document.getElementById('modalTitulo').textContent = 'Editar Profesor';
-                document.getElementById('profesorId').value = profesor.id;
-                document.getElementById('codigo').value = profesor.codigo || '';
-                document.getElementById('nombres').value = profesor.nombres || '';
-                document.getElementById('apellidos').value = profesor.apellidos || '';
-                document.getElementById('categoria_academica').value = profesor.categoria_academica || '';
-                document.getElementById('categoria_cientifica').value = profesor.categoria_cientifica || '';
-                document.getElementById('email').value = profesor.email || '';
-                document.getElementById('telefono').value = profesor.telefono || '';
-                document.getElementById('activo').value = profesor.activo ? 'true' : 'false';
-                
-                if (!modalInstance) {
-                    modalInstance = new bootstrap.Modal(document.getElementById('modalProfesor'));
-                }
-                modalInstance.show();
-                
-            } catch (error) {
-                console.error('Error al cargar el profesor:', error);
-                alert(`Error al cargar el profesor: ${error.message}`);
+    }
+
+    async function eliminarProfesor(id) {
+        if (!confirm('¿Está seguro de eliminar este profesor?\nEsta acción no se puede deshacer.')) return;
+        try {
+            const response = await fetch(`/api/horarios/profesores/${id}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (response.ok) {
+                await cargarProfesores();
+                mostrarNotificacion('success', 'Profesor eliminado exitosamente');
+            } else {
+                mostrarNotificacion('error', `Error: ${result.error || 'Error al eliminar'}`);
             }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarNotificacion('error', 'Error de conexión al servidor');
         }
-        
-        async function guardarProfesor() {
-            const id = document.getElementById('profesorId').value;
-            const method = id ? 'PUT' : 'POST';
-            const url = id ? `/api/horarios/profesores/${id}` : '/api/horarios/profesores';
-            
-            const codigo = document.getElementById('codigo').value.trim();
-            const nombres = document.getElementById('nombres').value.trim();
-            const apellidos = document.getElementById('apellidos').value.trim();
-            
-            if (!codigo || !nombres || !apellidos) {
-                alert('Error: Código, nombres y apellidos son campos obligatorios');
-                return;
-            }
-            
-            const data = {
-                codigo: codigo,
-                nombres: nombres,
-                apellidos: apellidos,
-                categoria_academica: document.getElementById('categoria_academica').value,
-                categoria_cientifica: document.getElementById('categoria_cientifica').value,
-                email: document.getElementById('email').value.trim(),
-                telefono: document.getElementById('telefono').value.trim(),
-                activo: document.getElementById('activo').value === 'true'
-            };
-            
-            try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-                    await cargarProfesores();
-                    mostrarNotificacion('success', result.message || 'Profesor guardado exitosamente');
-                } else {
-                    alert(`Error: ${result.error || 'Error desconocido'}`);
-                }
-            } catch (error) {
-                console.error('Error de conexión:', error);
-                alert('Error de conexión al servidor');
-            }
-        }
-        
-        async function eliminarProfesor(id) {
-            if (!confirm('¿Está seguro de eliminar este profesor?\nEsta acción no se puede deshacer.')) return;
-            
-            try {
-                const response = await fetch(`/api/horarios/profesores/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    await cargarProfesores();
-                    mostrarNotificacion('success', 'Profesor eliminado exitosamente');
-                } else {
-                    mostrarNotificacion('error', `Error: ${result.error || 'Error al eliminar'}`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarNotificacion('error', 'Error de conexión al servidor');
-            }
-        }
-        
-        function mostrarNotificacion(tipo, mensaje) {
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
-            alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            alert.setAttribute('role', 'alert');
-            alert.innerHTML = `
-                <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-                ${mensaje}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar notificación"></button>
-            `;
-            
-            document.body.appendChild(alert);
-            
-            setTimeout(() => {
-                if (alert.parentNode) {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }
-            }, 3000);
-        }
-        
-        // ═══════════════════════════════════════════
-        // INICIALIZACIÓN
-        // ═══════════════════════════════════════════
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!requireAuth()) return;
-            
-            cargarProfesores();
-            
-            const modalElement = document.getElementById('modalProfesor');
-            modalElement.addEventListener('hidden.bs.modal', function () {
-                document.getElementById('formProfesor').reset();
-            });
-            
-            document.getElementById('formProfesor').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && e.target.type !== 'textarea') {
-                    e.preventDefault();
-                }
-            });
-            
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.type === 'childList') {
-                        mutation.addedNodes.forEach((node) => {
-                            if (node.nodeType === 1 && node.tagName === 'TR') {
-                                node.classList.add('fade-in');
-                            }
-                        });
-                    }
-                });
-            });
-            
-            observer.observe(document.getElementById('tablaProfesores'), {
-                childList: true
-            });
-        });
-    </script>
+    }
+
+    function mostrarNotificacion(tipo, mensaje) {
+        const colores = {
+            success: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+            error: 'bg-red-50 text-red-800 border-red-200'
+        };
+        const iconos = {
+            success: 'fas fa-check-circle text-emerald-600',
+            error: 'fas fa-exclamation-triangle text-red-500'
+        };
+        const alerta = document.createElement('div');
+        alerta.className = `fixed top-5 right-5 z-50 max-w-sm w-full rounded-xl border p-4 shadow-lg notificacion flex items-center gap-3 ${colores[tipo] || colores.error}`;
+        alerta.innerHTML = `
+            <i class="${iconos[tipo]} text-2xl"></i>
+            <div class="flex-1">
+                <p class="font-semibold text-sm">${tipo === 'success' ? 'Éxito' : 'Error'}</p>
+                <p class="text-xs">${mensaje}</p>
+            </div>
+            <button class="text-lg opacity-50 hover:opacity-100" onclick="this.parentElement.remove()">&times;</button>
+        `;
+        document.body.appendChild(alerta);
+        setTimeout(() => { if (alerta.parentNode) alerta.remove(); }, 4000);
+    }
+
+    function mostrarError(mensaje) {
+        const tbody = document.getElementById('tablaProfesores');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-10">
+                    <div class="inline-flex items-center gap-3 bg-red-50 text-red-800 rounded-xl p-4">
+                        <i class="fas fa-exclamation-triangle text-xl"></i>
+                        <span>${mensaje}</span>
+                    </div>
+                </td>
+            </tr>`;
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!requireAuth()) return;
+        cargarProfesores();
+    });
+</script>
 </body>
 </html>
