@@ -1,0 +1,299 @@
+import { useEffect, useState } from "react";
+import api from "../api";
+import Layout from "../components/Layout";
+import { useNavigate } from "react-router-dom";
+import "./css/Asignaturas.css"; // Nuevo archivo CSS
+
+const Asignaturas = () => {
+  const [asignaturas, setAsignaturas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [asignaturaToDelete, setAsignaturaToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  // Función para obtener las asignaturas
+  const fetchAsignaturas = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get(
+        "/auth/asignaturas",
+      );
+      setAsignaturas(response.data);
+    } catch (error) {
+      console.error("Error al obtener asignaturas:", error);
+      setError("No se pudieron cargar las asignaturas. Intenta nuevamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para confirmar eliminación
+  const confirmarEliminarAsignatura = (asignatura) => {
+    setAsignaturaToDelete(asignatura);
+    setShowDeleteModal(true);
+  };
+
+  // Función para eliminar una asignatura
+  const eliminarAsignatura = async () => {
+    try {
+      await api.delete(
+        `/auth/asignaturas/${asignaturaToDelete.id_asignatura}`,
+      );
+      setAsignaturas(
+        asignaturas.filter(
+          (asig) => asig.id_asignatura !== asignaturaToDelete.id_asignatura,
+        ),
+      );
+      setShowDeleteModal(false);
+      setAsignaturaToDelete(null);
+    } catch (error) {
+      console.error("Error al eliminar asignatura:", error);
+      setError("No se pudo eliminar la asignatura. Intenta nuevamente.");
+    }
+  };
+
+  // Filtrar asignaturas por término de búsqueda
+  const filteredAsignaturas = asignaturas.filter((asig) =>
+    asig.nombre_asignatura.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  // Efecto para cargar las asignaturas al montar el componente
+  useEffect(() => {
+    fetchAsignaturas();
+  }, []);
+
+  return (
+    <>
+      <Layout />
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Confirmar Eliminación</h3>
+            <p>
+              ¿Estás seguro de que deseas eliminar la asignatura{" "}
+              <strong>{asignaturaToDelete?.nombre_asignatura}</strong>?
+            </p>
+            <div className="modal-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancelar
+              </button>
+              <button className="btn-danger" onClick={eliminarAsignatura}>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="asignaturas-container">
+        <div className="page-header">
+          <div className="header-content">
+            <h1>Asignaturas</h1>
+            <p className="subtitle">
+              Administra las asignaturas académicas. {asignaturas.length}{" "}
+              asignatura(s) registradas
+            </p>
+          </div>
+          <button
+            className="btn-primary btn-add"
+            onClick={() => navigate("/home/asignaturas/new")}
+          >
+            <span className="btn-icon">+</span>
+            Nueva Asignatura
+          </button>
+        </div>
+
+        {/* Barra de búsqueda y filtros */}
+        <div className="search-container">
+          <div className="search-box">
+            <svg
+              className="search-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path d="M10 2a8 8 0 015.292 14.293l4.708 4.707-1.414 1.414-4.707-4.708A8 8 0 1110 2zm0 2a6 6 0 100 12 6 6 0 000-12z" />
+            </svg>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Buscar asignaturas por nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                className="clear-search"
+                onClick={() => setSearchTerm("")}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <div className="filter-info">
+            Mostrando {filteredAsignaturas.length} de {asignaturas.length}{" "}
+            asignaturas
+          </div>
+        </div>
+
+        {error && (
+          <div className="alert alert-error">
+            <span>⚠️</span>
+            <p>{error}</p>
+            <button onClick={fetchAsignaturas}>Reintentar</button>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Cargando asignaturas...</p>
+          </div>
+        ) : filteredAsignaturas.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📚</div>
+            <h3>
+              {searchTerm
+                ? "No se encontraron asignaturas"
+                : "No hay asignaturas registradas"}
+            </h3>
+            <p>
+              {searchTerm
+                ? "Intenta con otro término de búsqueda"
+                : "Comienza agregando una nueva asignatura al sistema."}
+            </p>
+            {!searchTerm && (
+              <button
+                className="btn-primary"
+                onClick={() => navigate("/home/asignaturas/new")}
+              >
+                Agregar Primera Asignatura
+              </button>
+            )}
+            {searchTerm && (
+              <button
+                className="btn-secondary"
+                onClick={() => setSearchTerm("")}
+              >
+                Limpiar búsqueda
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="table-container">
+            <div className="table-responsive">
+              <table className="asignaturas-table">
+                <thead>
+                  <tr>
+                    <th>Nombre de la Asignatura</th>
+                    <th>ID</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAsignaturas.map((asignatura) => (
+                    <tr key={asignatura.id_asignatura}>
+                      <td className="asignatura-name">
+                        <div className="asignatura-info">
+                          <span className="asignatura-icon">📚</span>
+                          <div>
+                            <div className="asignatura-title">
+                              {asignatura.nombre_asignatura}
+                            </div>
+                            <div className="asignatura-subtitle">
+                              Asignatura ID: {asignatura.id_asignatura}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="badge">
+                          ID: {asignatura.id_asignatura}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            className="btn-action btn-edit"
+                            onClick={() =>
+                              navigate(
+                                `/home/asignaturas/${asignatura.id_asignatura}/editar`,
+                              )
+                            }
+                            title="Editar"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              fill="currentColor"
+                              viewBox="0 0 16 16"
+                            >
+                              <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
+                            </svg>
+                            <span>Editar</span>
+                          </button>
+                          <button
+                            className="btn-action btn-delete"
+                            onClick={() =>
+                              confirmarEliminarAsignatura(asignatura)
+                            }
+                            title="Eliminar"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              fill="currentColor"
+                              viewBox="0 0 16 16"
+                            >
+                              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
+                              <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z" />
+                            </svg>
+                            <span>Eliminar</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="page-footer">
+          <div className="footer-info">
+            <p>
+              Mostrando <strong>{filteredAsignaturas.length}</strong> de{" "}
+              <strong>{asignaturas.length}</strong> asignaturas
+            </p>
+          </div>
+          <div className="export-options">
+            <button
+              className="btn-export"
+              onClick={() => console.log("Exportar a CSV")}
+            >
+              📥 Exportar CSV
+            </button>
+            <button
+              className="btn-export"
+              onClick={() => console.log("Exportar a PDF")}
+            >
+              📄 Exportar PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Asignaturas;
