@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Computadoras — Gestor</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <h1>🧪 Gestor de Laboratorios</h1>
+    <a href="index.html">Dashboard</a>
+    <a href="labs.html">Laboratorios</a>
+    <a href="computers.html" class="active">Computadoras</a>
+    <a href="incidents.html">Incidentes</a>
+    <button class="btn-logout" onclick="API.logout()">Cerrar Sesión</button>
+  </nav>
+  <div class="main">
+    <p class="page-title">Computadoras</p>
+    <p class="page-subtitle">Gestión de equipos por laboratorio</p>
+
+    <div class="card">
+      <h2>Agregar Computadora</h2>
+      <form id="formPC" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+        <div class="form-group" style="margin:0"><label>Laboratorio</label>
+          <select id="pcLab" required><option value="">Seleccionar...</option></select>
+        </div>
+        <div class="form-group" style="margin:0"><label>N° Serie</label><input type="text" id="pcSerial" required></div>
+        <div class="form-group" style="margin:0"><label>Marca</label><input type="text" id="pcBrand"></div>
+        <div class="form-group" style="margin:0"><label>Modelo</label><input type="text" id="pcModel"></div>
+        <button type="submit" class="btn btn-primary">Agregar</button>
+      </form>
+      <div id="msgPC" class="message"></div>
+    </div>
+
+    <div class="card">
+      <h2>Filtrar por laboratorio</h2>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+        <select id="filterLab" onchange="loadComputers()" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+          <option value="">Todos los laboratorios</option>
+        </select>
+      </div>
+      <div id="computersGrid" class="grid"><p style="color:#aaa">Cargando...</p></div>
+    </div>
+  </div>
+
+  <!-- Modal editar -->
+  <div id="editModal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <h2>Editar Computadora</h2>
+      <input type="hidden" id="editId">
+      <div class="form-group"><label>N° Serie</label><input type="text" id="editSerial"></div>
+      <div class="form-group"><label>Marca</label><input type="text" id="editBrand"></div>
+      <div class="form-group"><label>Modelo</label><input type="text" id="editModel"></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="editStatus">
+          <option value="AVAILABLE">Disponible</option>
+          <option value="IN_USE">En uso</option>
+          <option value="BROKEN">Rota</option>
+          <option value="MAINTENANCE">Mantenimiento</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="savePC()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    if (!API.isLoggedIn()) window.location.href = '/login.html';
+    let allLabs = [];
+
+    async function init() {
+      const res = await API.getLabs();
+      allLabs = res.data?.data || [];
+      const opts = allLabs.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+      document.getElementById('pcLab').innerHTML = '<option value="">Seleccionar...</option>' + opts;
+      document.getElementById('filterLab').innerHTML = '<option value="">Todos los laboratorios</option>' + opts;
+
+      // Pre-seleccionar si viene por URL
+      const params = new URLSearchParams(location.search);
+      const labId = params.get('lab');
+      if (labId) { document.getElementById('filterLab').value = labId; }
+      await loadComputers();
+    }
+
+    async function loadComputers() {
+      const labId = document.getElementById('filterLab').value;
+      const res = labId ? await API.getComputersByLab(labId) : await API.getComputers();
+      const computers = res.data?.data || [];
+      const grid = document.getElementById('computersGrid');
+      if (!computers.length) { grid.innerHTML = '<p class="empty">No hay computadoras</p>'; return; }
+      grid.innerHTML = computers.map(c => {
+        const lab = allLabs.find(l => l.id === c.lab_id);
+        return `
+        <div class="item-card">
+          <h3>Serie: ${c.serial_number}</h3>
+          <p>🏢 ${lab?.name || 'Lab desconocido'}</p>
+          ${c.brand ? `<p>🏷️ ${c.brand} ${c.model || ''}</p>` : ''}
+          <p><span class="badge badge-${c.status}">${c.status}</span></p>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="openEdit(${JSON.stringify(c).replace(/"/g,'&quot;')})">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePC('${c.id}')">Eliminar</button>
+            <a href="incidents.html?computer=${c.id}" class="btn btn-secondary btn-sm">Incidentes</a>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    document.getElementById('formPC').addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await API.createComputer({
+        lab_id: document.getElementById('pcLab').value,
+        serial_number: document.getElementById('pcSerial').value,
+        brand: document.getElementById('pcBrand').value || null,
+        model: document.getElementById('pcModel').value || null
+      });
+      const msg = document.getElementById('msgPC');
+      if (res.ok) {
+        msg.textContent = 'Computadora agregada'; msg.className = 'message success';
+        e.target.reset(); await loadComputers();
+      } else {
+        msg.textContent = res.data?.message || 'Error'; msg.className = 'message error';
+      }
+    });
+
+    function openEdit(c) {
+      document.getElementById('editId').value = c.id;
+      document.getElementById('editSerial').value = c.serial_number;
+      document.getElementById('editBrand').value = c.brand || '';
+      document.getElementById('editModel').value = c.model || '';
+      document.getElementById('editStatus').value = c.status;
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    async function savePC() {
+      const id = document.getElementById('editId').value;
+      await API.updateComputer(id, {
+        serial_number: document.getElementById('editSerial').value,
+        brand: document.getElementById('editBrand').value,
+        model: document.getElementById('editModel').value,
+        status: document.getElementById('editStatus').value
+      });
+      closeModal(); await loadComputers();
+    }
+
+    async function deletePC(id) {
+      if (!confirm('¿Eliminar esta computadora?')) return;
+      await API.deleteComputer(id); await loadComputers();
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // src/middleware/auth.middleware.ts
 import { Request, Response, NextFunction } from 'express';
-import { supabaseAuth } from '../db/supabase';
+import { supabaseAuth, supabaseAdmin } from '../db/supabase';
 
 export const authMiddleware = async (
   req: Request,
@@ -9,42 +9,51 @@ export const authMiddleware = async (
 ) => {
   try {
     const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        ok: false,
-        message: 'Missing or invalid authorization header'
-      });
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token requerido' });
     }
 
     const token = authHeader.split(' ')[1];
 
-    // Verificar token con Supabase Auth
-    const { data, error } = await supabaseAuth.auth.getUser(token);
-
-    if (error || !data?.user) {
-      return res.status(401).json({
-        ok: false,
-        message: 'Invalid or expired token'
-      });
+    // 1. Validar token con Supabase Auth (anon key)
+    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({ error: 'Token inválido o expirado' });
     }
 
-    // Leer rol desde public.profiles
-    const { data: profile } = await supabaseAuth
+    // 2. Obtener perfil desde public.profiles con service role (evita RLS)
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('*, roles(name)')
-      .eq('id', data.user.id)
+      .select('role_id, full_name, account_type')
+      .eq('id', user.id)
       .single();
 
-    (req as any).user = data.user;
-    (req as any).userRole = profile?.roles?.name || null;
-    (req as any).profile = profile;
+    if (profileError || !profile) {
+      return res.status(401).json({ error: 'Perfil de usuario no encontrado' });
+    }
+
+    // 3. Obtener nombre del rol desde public.roles
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from('roles')
+      .select('name')
+      .eq('id', profile.role_id)
+      .single();
+
+    if (roleError || !roleData) {
+      return res.status(401).json({ error: 'Rol de usuario no encontrado' });
+    }
+
+    // 4. Adjuntar información unificada al request
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: roleData.name,
+      profile: profile,
+    };
 
     next();
   } catch (err) {
-    return res.status(500).json({
-      ok: false,
-      message: 'Auth middleware error'
-    });
+    console.error('Error en middleware de autenticación:', err);
+    return res.status(500).json({ error: 'Error interno de autenticación' });
   }
 };

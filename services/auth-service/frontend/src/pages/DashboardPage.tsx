@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 
-type ModuleKey = 'practicas' | 'elecciones' | 'notas' | 'horarios' | 'inventario';
+type ModuleKey = 'practicas' | 'elecciones' | 'notas' | 'horarios' | 'inventario' | 'laboratorios';
 
 type ModuleConfig = {
   key: ModuleKey;
@@ -27,8 +27,8 @@ const roleLabels: Record<string, string> = {
   admin_votaciones: 'Administrador de votaciones',
   admin_notas: 'Administrador de notas',
   profesor: 'Profesor',
-  admin_laboratorio: 'Administrador de laboratorio',
-  tecnico_laboratorio: 'Técnico de laboratorio',
+  lab_admin: 'Administrador de laboratorio',
+  lab_technician: 'Técnico de laboratorio',
 };
 
 const moduleCatalog: ModuleConfig[] = [
@@ -77,16 +77,16 @@ const moduleCatalog: ModuleConfig[] = [
     available: true,
   },
   {
-    key: 'inventario',
-    title: 'Inventario',
-    description: 'Control de laboratorios, recursos y equipos técnicos.',
-    path: '/inventario',
-    badge: 'Próximamente',
-    color: 'from-amber-500 to-amber-700',
-    accent: 'amber',
-    allowedRoles: ['super_admin', 'admin_laboratorio', 'tecnico_laboratorio'],
-    available: false,
-  },
+  key: 'laboratorios',
+  title: 'Laboratorios',
+  description: 'Gestión de laboratorios, computadoras e incidentes técnicos.',
+  path: '/lab',
+  badge: 'Activo',
+  color: 'from-emerald-500 to-emerald-700',
+  accent: 'emerald',
+  allowedRoles: ['super_admin', 'lab_admin', 'lab_technician'],
+  available: true,
+},
 ];
 
 function canAccessModule(role: string | null, module: ModuleConfig) {

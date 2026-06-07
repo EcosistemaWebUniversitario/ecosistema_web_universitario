@@ -4,28 +4,21 @@ import { Request, Response, NextFunction } from 'express';
 export const roleMiddleware = (allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userRole = (req as any).userRole;
+      const userRole = req.user?.role;
 
       if (!userRole) {
-        return res.status(403).json({
-          ok: false,
-          message: 'Role not found in profile'
-        });
+        return res.status(403).json({ error: 'Rol no encontrado' });
       }
 
       if (!allowedRoles.includes(userRole)) {
         return res.status(403).json({
-          ok: false,
-          message: `Insufficient permissions. Required: ${allowedRoles.join(' or ')}`
+          error: `Permisos insuficientes. Requiere: ${allowedRoles.join(' o ')}`
         });
       }
 
       next();
     } catch (err) {
-      return res.status(500).json({
-        ok: false,
-        message: 'Role middleware error'
-      });
+      return res.status(500).json({ error: 'Error en middleware de roles' });
     }
   };
 };

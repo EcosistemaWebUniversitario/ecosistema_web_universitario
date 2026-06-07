@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratorios — Gestor</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <h1>🧪 Gestor de Laboratorios</h1>
+    <a href="index.html">Dashboard</a>
+    <a href="labs.html" class="active">Laboratorios</a>
+    <a href="computers.html">Computadoras</a>
+    <a href="incidents.html">Incidentes</a>
+    <button class="btn-logout" onclick="API.logout()">Cerrar Sesión</button>
+  </nav>
+  <div class="main">
+    <p class="page-title">Laboratorios</p>
+    <p class="page-subtitle">Gestión de laboratorios de computación</p>
+
+    <div class="card">
+      <h2>Agregar Laboratorio</h2>
+      <form id="formLab" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+        <div class="form-group" style="margin:0"><label>Nombre</label><input type="text" id="labName" required></div>
+        <div class="form-group" style="margin:0"><label>Ubicación</label><input type="text" id="labLocation" required></div>
+        <div class="form-group" style="margin:0"><label>Capacidad</label><input type="number" id="labCapacity" min="1" required></div>
+        <button type="submit" class="btn btn-primary">Agregar</button>
+      </form>
+      <div id="msgLab" class="message"></div>
+    </div>
+
+    <div class="card">
+      <h2>Laboratorios registrados</h2>
+      <div id="labsGrid" class="grid"><p style="color:#aaa">Cargando...</p></div>
+    </div>
+  </div>
+
+  <!-- Modal editar -->
+  <div id="editModal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <h2>Editar Laboratorio</h2>
+      <input type="hidden" id="editId">
+      <div class="form-group"><label>Nombre</label><input type="text" id="editName"></div>
+      <div class="form-group"><label>Ubicación</label><input type="text" id="editLocation"></div>
+      <div class="form-group"><label>Capacidad</label><input type="number" id="editCapacity"></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="editStatus">
+          <option value="ACTIVE">Activo</option>
+          <option value="INACTIVE">Inactivo</option>
+          <option value="MAINTENANCE">Mantenimiento</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveLab()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    if (!API.isLoggedIn()) window.location.href = '/login.html';
+
+    async function loadLabs() {
+      const res = await API.getLabs();
+      const labs = res.data?.data || [];
+      const grid = document.getElementById('labsGrid');
+      if (!labs.length) { grid.innerHTML = '<p class="empty">No hay laboratorios registrados</p>'; return; }
+      grid.innerHTML = labs.map(l => `
+        <div class="item-card">
+          <h3>${l.name}</h3>
+          <p>📍 ${l.location}</p>
+          <p>💻 Capacidad: ${l.capacity}</p>
+          <p><span class="badge badge-${l.status}">${l.status}</span></p>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="openEdit(${JSON.stringify(l).replace(/"/g,'&quot;')})">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteLab('${l.id}','${l.name}')">Eliminar</button>
+            <a href="computers.html?lab=${l.id}" class="btn btn-secondary btn-sm">Ver PCs</a>
+          </div>
+        </div>`).join('');
+    }
+
+    document.getElementById('formLab').addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await API.createLab({
+        name: document.getElementById('labName').value,
+        location: document.getElementById('labLocation').value,
+        capacity: parseInt(document.getElementById('labCapacity').value)
+      });
+      const msg = document.getElementById('msgLab');
+      if (res.ok) {
+        msg.textContent = 'Laboratorio creado correctamente'; msg.className = 'message success';
+        e.target.reset(); await loadLabs();
+      } else {
+        msg.textContent = res.data?.message || 'Error al crear'; msg.className = 'message error';
+      }
+    });
+
+    function openEdit(lab) {
+      document.getElementById('editId').value = lab.id;
+      document.getElementById('editName').value = lab.name;
+      document.getElementById('editLocation').value = lab.location;
+      document.getElementById('editCapacity').value = lab.capacity;
+      document.getElementById('editStatus').value = lab.status;
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    async function saveLab() {
+      const id = document.getElementById('editId').value;
+      await API.updateLab(id, {
+        name: document.getElementById('editName').value,
+        location: document.getElementById('editLocation').value,
+        capacity: parseInt(document.getElementById('editCapacity').value),
+        status: document.getElementById('editStatus').value
+      });
+      closeModal(); await loadLabs();
+    }
+
+    async function deleteLab(id, name) {
+      if (!confirm(`¿Eliminar el laboratorio "${name}"? Se eliminarán todas sus computadoras.`)) return;
+      await API.deleteLab(id); await loadLabs();
+    }
+
+    loadLabs();
+  </script>
+</body>
+</html>

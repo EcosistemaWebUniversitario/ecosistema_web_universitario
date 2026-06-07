@@ -1,24 +1,22 @@
 // src/db/supabase.ts
-import dotenv from 'dotenv';
-dotenv.config();
 
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
 const supabaseAnon = process.env.SUPABASE_ANON_KEY!;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
+if (!supabaseUrl || !supabaseServiceKey || !supabaseAnon) {
+  throw new Error('Faltan variables de entorno de Supabase');
 }
 
-// Cliente base sin schema fijo
-const supabaseBase = createClient(supabaseUrl, supabaseKey, {
+// Cliente admin (service_role) para operaciones que requieren privilegios elevados
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { autoRefreshToken: false, persistSession: false }
 });
 
-// db() aplica .schema('labs') en cada llamada — compatible con v2.107
-export const db = () => supabaseBase.schema('lab_services') as any;
-
-// Cliente anon para verificar tokens JWT
+// Cliente anónimo para verificar tokens JWT
 export const supabaseAuth = createClient(supabaseUrl, supabaseAnon);
+
+// Helper para acceder al schema 'lab_services' usando el cliente admin
+export const db = () => supabaseAdmin.schema('lab_services');

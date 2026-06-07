@@ -1,3 +1,4 @@
+// app.ts
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -21,10 +22,13 @@ app.use('/api/labs', labsRoutes);
 app.use('/api/computers', computersRoutes);
 app.use('/api/incidents', incidentsRoutes);
 
+// Fallback: redirige al login central si no es una ruta API
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(frontendPath, 'login.html'));
+    // Mientras no haya SPA, redirigimos al auth-service
+    return res.redirect('/auth');
   }
+  res.status(404).json({ error: 'Endpoint no encontrado' });
 });
 
 export default app;
