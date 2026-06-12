@@ -55,16 +55,16 @@ const moduleCatalog: ModuleConfig[] = [
     available: true,
   },
   {
-    key: 'notas',
-    title: 'Notas',
-    description: 'Registro y consulta de evaluaciones académicas.',
-    path: '/notas',
-    badge: 'Próximamente',
-    color: 'from-sky-500 to-sky-700',
-    accent: 'sky',
-    allowedRoles: ['super_admin', 'admin_notas', 'profesor', 'estudiante'],
-    available: false,
-  },
+  key: 'notas',
+  title: 'Notas',
+  description: 'Registro y consulta de evaluaciones académicas.',
+  path: '/notas',
+  badge: 'Activo',            // ← cambiado de 'Próximamente' a 'Activo'
+  color: 'from-sky-500 to-sky-700',
+  accent: 'sky',
+  allowedRoles: ['super_admin', 'admin_notas', 'profesor', 'estudiante'],
+  available: true,            // ← cambiado de false a true
+},
   {
     key: 'horarios',
     title: 'Horarios',
