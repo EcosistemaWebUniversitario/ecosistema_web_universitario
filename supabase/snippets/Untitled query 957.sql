@@ -1,0 +1,2 @@
+ALTER TABLE practicas.prelocalization_assignment
+DROP CONSTRAINT IF EXISTS prelocalization_assignment_call_vacancy_unique;

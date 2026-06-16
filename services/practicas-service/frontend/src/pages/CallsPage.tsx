@@ -33,7 +33,7 @@ function extractArray<T>(payload: any): T[] {
 }
 
 export default function CallsPage() {
-  const {  role } = useAuth();
+  const { role } = useAuth();
   const queryClient = useQueryClient();
 
   const isAdmin =
@@ -75,7 +75,7 @@ export default function CallsPage() {
 
       return await practicasAPI.createCall({
         careerId,
-        academic_year: 4, // ← fijo para prelocalización
+        academicYear: 4, // ✅ cambiamos de academic_year a academicYear
       });
     },
     onSuccess: async () => {
@@ -139,9 +139,7 @@ export default function CallsPage() {
                     {career.name}
                   </option>
                 ))}
-              </select>
-            </div>
-
+              </select></div>
             <div className="flex items-end">
               <button
                 type="submit"

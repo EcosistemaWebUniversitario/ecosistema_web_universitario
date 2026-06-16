@@ -6,7 +6,9 @@ const fs = require('fs');
 require('dotenv').config({ 
   path: process.env.NODE_ENV === 'development' 
     ? path.resolve(__dirname, '../.env.local') 
-    : path.resolve(__dirname, '../.env') 
+    : path.resolve(__dirname, '../.env'), 
+
+    override: true
 });
 
 const express = require('express');

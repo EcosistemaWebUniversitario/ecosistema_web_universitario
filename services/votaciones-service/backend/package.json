@@ -4,8 +4,8 @@
   "description": "Sistema de Votaciones — Node.js + Supabase",
   "main": "src/server.js",
   "scripts": {
-    "start:online": "node backend/src/server.js",
-    "dev": "cross-env NODE_ENV=development nodemon backend/src/server.js"
+    "start:online": "node src/server.js",
+    "dev": "cross-env NODE_ENV=development nodemon src/server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.0",

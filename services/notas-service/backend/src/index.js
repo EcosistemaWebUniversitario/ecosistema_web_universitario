@@ -1,20 +1,6 @@
 // src/index.js
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-
-// Carga condicional de variables de entorno según NODE_ENV
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-dotenv.config({
-  path: process.env.NODE_ENV === 'development'
-    ? resolve(__dirname, '../.env.local')
-    : resolve(__dirname, '../.env')
-});
-
 import academicRoutes from './routes/academicRoutes.js';
 import notasRoutes from './routes/notasRoutes.js';
 

@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start:online": "node backend/src/index.js",
-    "dev": "cross-env NODE_ENV=development nodemon backend/src/index.js"
+    "start:online": "cross-env NODE_ENV=production node --import ./src/load-env.mjs src/index.js",
+    "dev": "cross-env NODE_ENV=development nodemon --exec \"node --import ./src/load-env.mjs src/index.js\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.0",

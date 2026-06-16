@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { practicasAPI } from '../api/practicas.api';
+import { api } from '../api/client';
 
 type Student = {
   id: number;
@@ -31,7 +31,7 @@ type Assignment = {
 type ManageData = {
   call: {
     id: number;
-    academic_year: number;
+    academicYear: number;
     status: 'OPEN' | 'CLOSED';
   };
   nextStudent: Student | null;
@@ -41,34 +41,59 @@ type ManageData = {
   ranking: unknown[];
 };
 
+// Función para normalizar un estudiante (acepta names/surnames o firstName/lastName)
+function normalizeStudent(s: any): Student {
+  return {
+    ...s,
+    firstName: s.firstName ?? s.names ?? '',
+    lastName: s.lastName ?? s.surnames ?? '',
+  };
+}
+
 export default function AssignmentsPage() {
   const queryClient = useQueryClient();
   const params = useParams();
-
   const callId = Number(params.callId);
   const [message, setMessage] = useState('');
 
   const manageQuery = useQuery<ManageData>({
     queryKey: ['assignments', callId],
     queryFn: async () => {
-      const res = await practicasAPI.getAssignments(callId);
-      return res.data.data;
+      const res = await api.get(`/prelocalization/calls/${callId}/assignments`);
+      const data = res.data.data;
+
+      // Normalizar nextStudent si existe
+      if (data.nextStudent) {
+        data.nextStudent = normalizeStudent(data.nextStudent);
+      }
+
+      // Normalizar estudiantes dentro de las asignaciones
+      if (data.assignments) {
+        data.assignments = data.assignments.map((a: any) => ({
+          ...a,
+          student: normalizeStudent(a.student),
+        }));
+      }
+
+      return data;
     },
     enabled: Number.isFinite(callId) && callId > 0,
   });
 
   const assignMutation = useMutation({
     mutationFn: async (vacancyId: number) => {
-      return await practicasAPI.assignStudent(callId, vacancyId);
+      await api.post(`/prelocalization/calls/${callId}/assignments/${vacancyId}`);
     },
-    onSuccess: async () => {
-      setMessage('Asignación realizada correctamente.');
+    onSuccess: async (data: any) => {
+      setMessage(data?.message || 'Asignación realizada correctamente.');
       await queryClient.invalidateQueries({ queryKey: ['assignments', callId] });
     },
     onError: () => {
       setMessage('Error en la asignación.');
     },
-  });  const nextStudent = manageQuery.data?.nextStudent;
+  });
+
+  const nextStudent = manageQuery.data?.nextStudent;
   const vacancies = useMemo(() => manageQuery.data?.vacancies ?? [], [manageQuery.data]);
   const byMunicipality = useMemo(() => manageQuery.data?.byMunicipality ?? [], [manageQuery.data]);
   const assignments = useMemo(() => manageQuery.data?.assignments ?? [], [manageQuery.data]);

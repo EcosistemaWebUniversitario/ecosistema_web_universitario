@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { practicasAPI } from '../api/practicas.api';
+import { api } from '../api/client';
 
 type Student = {
   id: number;
@@ -19,17 +19,14 @@ type RankingItem = {
 type RankingData = {
   call: {
     id: number;
-    academic_year: number;
+    academicYear: number;
+    status: string;
+    career: { id: number; name: string };
+    creator: { id: number; full_name: string };
   };
   students: Student[];
   ranking: RankingItem[];
 };
-
-/*function extractArray<T>(payload: any): T[] {
-  if (Array.isArray(payload)) return payload;
-  if (payload?.data && Array.isArray(payload.data)) return payload.data;
-  return [];
-}*/
 
 export default function RankingPage() {
   const queryClient = useQueryClient();
@@ -43,7 +40,7 @@ export default function RankingPage() {
   const rankingQuery = useQuery<RankingData>({
     queryKey: ['ranking', callId],
     queryFn: async () => {
-      const res = await practicasAPI.getRanking(callId);
+      const res = await api.get(`/prelocalization/calls/${callId}/ranking`);
       return res.data.data;
     },
     enabled: !!callId,
@@ -51,7 +48,7 @@ export default function RankingPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      return await practicasAPI.createRankingEntry(callId, {
+      await api.post(`/prelocalization/calls/${callId}/ranking`, {
         studentId: selectedStudent,
         position,
       });
@@ -67,7 +64,7 @@ export default function RankingPage() {
 
   const removeMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await practicasAPI.removeRankingEntry(callId, id);
+      await api.delete(`/prelocalization/calls/${callId}/ranking/${id}`);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['ranking', callId] });
@@ -88,7 +85,9 @@ export default function RankingPage() {
   if (!callId || Number.isNaN(callId)) {
     return (
       <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm text-slate-600">No se recibió una convocatoria válida.</p>
+        <p className="text-sm text-slate-600">
+          No se recibió una convocatoria válida.
+        </p>
       </div>
     );
   }
@@ -112,6 +111,7 @@ export default function RankingPage() {
         <p>Cargando...</p>
       ) : (
         <div className="grid gap-8 lg:grid-cols-2">
+          {/* Columna izquierda: estudiantes disponibles */}
           <div className="rounded-xl bg-white p-6 shadow">
             <h2 className="mb-4 font-bold">Estudiantes disponibles</h2>
 
@@ -156,11 +156,14 @@ export default function RankingPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500">No hay estudiantes disponibles.</p>
+                <p className="text-sm text-gray-500">
+                  No hay estudiantes disponibles.
+                </p>
               )}
             </div>
           </div>
 
+          {/* Columna derecha: ranking actual */}
           <div className="rounded-xl bg-white p-6 shadow">
             <h2 className="mb-4 font-bold">Ranking actual</h2>
 

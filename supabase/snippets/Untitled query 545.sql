@@ -1,0 +1,1 @@
+ALTER ROLE authenticator SET pgrst.db_schemas = 'public, academico, horarios, lab_services, labs, notas, votaciones, practicas';

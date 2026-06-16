@@ -86,15 +86,38 @@ export class RankingService {
         municipality: true,
       },
       orderBy: [
-      { surnames: 'asc' },
-      { names: 'asc' },
+        { surnames: 'asc' },
+        { names: 'asc' },
       ],
     });
 
+    // Mapear estudiantes disponibles para que tengan firstName y lastName
+    const mappedStudents = students.map((s) => ({
+      ...s,
+      firstName: s.names,
+      lastName: s.surnames,
+    }));
+
+    // Mapear ranking para que cada item.student tenga firstName y lastName
+    const mappedRanking = call.prelocalization_ranking.map((item) => ({
+      ...item,
+      student: {
+        ...item.student,
+        firstName: item.student.names,
+        lastName: item.student.surnames,
+      },
+    }));
+
     return {
-      call,
-      students,
-      ranking: call.prelocalization_ranking,
+      call: {
+        id: call.id,
+        academicYear: call.academic_year,
+        status: call.status,
+        career: call.career,
+        creator: call.profiles,
+      },
+      students: mappedStudents,
+      ranking: mappedRanking,
     };
   }
 
